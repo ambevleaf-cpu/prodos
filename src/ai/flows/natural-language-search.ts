@@ -19,8 +19,8 @@ const NaturalLanguageSearchInputSchema = z.object({
 export type NaturalLanguageSearchInput = z.infer<typeof NaturalLanguageSearchInputSchema>;
 
 const NaturalLanguageSearchOutputSchema = z.object({
-  results: z.array(z.string()).describe('A list of search results.'),
-  refinedQuery: z.string().describe('A refined query for better search results, if applicable.'),
+  searchUrl: z.string().describe('A URL to the search results page.'),
+  refinedQuery: z.string().optional().describe('A refined query for better search results, if applicable.'),
 });
 export type NaturalLanguageSearchOutput = z.infer<typeof NaturalLanguageSearchOutputSchema>;
 
@@ -38,8 +38,6 @@ const refineSearchQuery = ai.defineTool({
   outputSchema: z.string().describe('The refined search query.'),
 },
 async (input) => {
-  // Placeholder implementation for refining the search query.
-  // In a real application, this would use an external search API like Google.
   return `Refined: ${input.originalQuery} - ${input.reason}`;
 }
 );
@@ -57,7 +55,7 @@ const naturalLanguageSearchPrompt = ai.definePrompt({
   If the query is ambiguous or can be improved, use the refineSearchQuery tool to get a better query.
   Otherwise, use the performGoogleSearch tool to search for the query.
 
-  Return the search results and the refined query (if applicable).`,
+  Return the search URL and the refined query (if applicable).`,
 });
 
 const naturalLanguageSearchFlow = ai.defineFlow(

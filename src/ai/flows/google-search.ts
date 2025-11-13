@@ -11,19 +11,15 @@ import { z } from 'genkit';
 export const performGoogleSearch = ai.defineTool(
   {
     name: 'performGoogleSearch',
-    description: 'Performs a google search and returns the results.',
+    description: 'Performs a google search and returns a URL to the search results.',
     inputSchema: z.object({
       query: z.string().describe('The query to search for on Google'),
     }),
-    outputSchema: z.array(z.string()).describe('A list of search results from Google.'),
+    outputSchema: z.string().describe('A URL for the Google search results page.'),
   },
   async (input) => {
-    // Placeholder for Google Search API call
-    console.log(`Searching Google for: ${input.query}`);
-    return [
-      `Search result 1 for "${input.query}"`,
-      `Search result 2 for "${input.query}"`,
-      `Search result 3 for "${input.query}"`,
-    ];
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(input.query)}&igu=1`;
+    console.log(`Generated Google Search URL: ${searchUrl}`);
+    return searchUrl;
   }
 );

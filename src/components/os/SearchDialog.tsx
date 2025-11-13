@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { handleSearch } from '@/app/actions';
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2 } from 'lucide-react';
+import { Card } from '../ui/card';
 
 interface SearchDialogProps {
   open: boolean;
@@ -37,7 +38,7 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-4xl h-[80vh]">
         <DialogHeader>
           <DialogTitle>Search</DialogTitle>
           <DialogDescription>
@@ -62,26 +63,16 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
             </Button>
           </div>
         </form>
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 flex-grow">
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-          {state.results && (
-            <div className="space-y-2">
-              <h4 className="font-medium">Results</h4>
-              {state.results.refinedQuery && (
-                 <p className="text-sm text-muted-foreground italic">
-                    Showing results for: "{state.results.refinedQuery}"
-                 </p>
-              )}
-              <ul className="list-disc list-inside space-y-1 rounded-md border p-4 text-sm">
-                {state.results.results.length > 0 ? (
-                  state.results.results.map((result, index) => (
-                    <li key={index}>{result}</li>
-                  ))
-                ) : (
-                  <li className='list-none'>No results found.</li>
-                )}
-              </ul>
-            </div>
+          {state.results?.searchUrl && (
+             <Card className="w-full h-full">
+                <iframe
+                  src={state.results.searchUrl}
+                  className="w-full h-full border-0"
+                  title="Google Search"
+                />
+              </Card>
           )}
         </div>
       </DialogContent>
