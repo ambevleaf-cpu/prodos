@@ -8,6 +8,7 @@ import { APPS_CONFIG, AppConfig } from '@/lib/apps.config';
 import FileExplorer from '../apps/FileExplorer';
 import Settings from '../apps/Settings';
 import Calculator from '../apps/Calculator';
+import CameraApp from '../apps/Camera';
 
 export interface WindowInstance {
   id: string;
@@ -25,6 +26,7 @@ const appComponentMap: { [key: string]: React.ComponentType } = {
   fileExplorer: FileExplorer,
   settings: Settings,
   calculator: Calculator,
+  camera: CameraApp,
 };
 
 export default function Desktop() {
@@ -57,7 +59,7 @@ export default function Desktop() {
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
       width: app.id === 'calculator' ? 350 : 800,
-      height: app.id === 'calculator' ? 450 : 500,
+      height: app.id === 'calculator' ? 450 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
     };
@@ -104,7 +106,7 @@ export default function Desktop() {
   
   const onResizeStart = useCallback((windowId: string, e: React.MouseEvent) => {
     focusWindow(windowId);
-    e.stopPropagation();
+e.stopPropagation();
     const window = windows.find(w => w.id === windowId);
     if (!window) return;
     resizeInfo.current = {
