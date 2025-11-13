@@ -20,10 +20,16 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette } from "lucide-react";
 import { useState } from "react";
+import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
+import NextImage from 'next/image';
 
-export default function Settings() {
+interface SettingsProps {
+  onSetWallpaper?: (photo: GalleryPhoto) => void;
+}
+
+export default function Settings({ onSetWallpaper }: SettingsProps) {
   const { toast } = useToast();
   const [volume, setVolume] = useState([50]);
   const [wifi, setWifi] = useState(true);
@@ -38,6 +44,39 @@ export default function Settings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Palette className="w-5 h-5" /> Personalization
+            </h3>
+            <div className="rounded-lg border p-4">
+              <div className="space-y-0.5 mb-4">
+                <Label htmlFor="wallpaper">Wallpaper</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose a wallpaper from your gallery.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-48 overflow-y-auto">
+                {galleryPhotos.map((photo) => (
+                  <button
+                    key={photo.id}
+                    className="relative rounded-md overflow-hidden group aspect-square focus:ring-2 focus:ring-ring focus:outline-none"
+                    onClick={() => onSetWallpaper && onSetWallpaper(photo)}
+                  >
+                    <NextImage
+                      src={photo.url}
+                      alt={photo.id}
+                      fill
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+          
           <div className="space-y-4">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Monitor className="w-5 h-5" /> Display

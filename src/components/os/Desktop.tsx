@@ -28,7 +28,11 @@ export interface WindowInstance {
   isMinimized: boolean;
 }
 
-export default function Desktop() {
+interface DesktopProps {
+  onSetWallpaper: (photo: GalleryPhoto) => void;
+}
+
+export default function Desktop({ onSetWallpaper }: DesktopProps) {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   const [nextZIndex, setNextZIndex] = useState(10);
@@ -101,7 +105,7 @@ export default function Desktop() {
 
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
-    settings: Settings,
+    settings: (props: any) => <Settings {...props} onSetWallpaper={onSetWallpaper} />,
     calculator: Calculator,
     camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
     gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
@@ -109,7 +113,7 @@ export default function Desktop() {
     notes: NotesApp,
     translator: Translator,
     clock: Clock,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp]);
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, onSetWallpaper]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
