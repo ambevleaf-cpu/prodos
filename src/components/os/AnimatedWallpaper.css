@@ -1,0 +1,318 @@
+
+.prodos-wallpaper {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0a1628 0%, #1a2332 50%, #0f1419 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    position: relative;
+}
+
+/* Animated background particles */
+.particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(100, 200, 255, 0.3);
+    border-radius: 50%;
+    animation: float 15s infinite ease-in-out;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) translateX(50px);
+        opacity: 0;
+    }
+}
+
+/* Circular tech rings */
+.tech-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    z-index: 2;
+}
+
+.ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    opacity: 0.15;
+}
+
+.ring-1 {
+    width: 100%;
+    height: 100%;
+    border-color: #4a9eff;
+    animation: rotate 30s linear infinite;
+}
+
+.ring-2 {
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-color: #7eb6ff;
+    animation: rotate 25s linear infinite reverse;
+}
+
+.ring-3 {
+    width: 60%;
+    height: 60%;
+    top: 20%;
+    left: 20%;
+    border-color: #a8d0ff;
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Logo container */
+.logo-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* Main logo circle */
+.logo-circle {
+    width: 400px;
+    height: 400px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Outer glow ring */
+.glow-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74, 158, 255, 0.2) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Inner circle with gradient */
+.inner-circle {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, 
+        rgba(30, 58, 87, 0.9) 0%, 
+        rgba(20, 40, 60, 0.95) 50%, 
+        rgba(15, 30, 45, 0.9) 100%);
+    border: 2px solid rgba(74, 158, 255, 0.5);
+    box-shadow: 
+        0 0 60px rgba(74, 158, 255, 0.4),
+        inset 0 0 60px rgba(74, 158, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* PROD text */
+.logo-text {
+    font-size: 120px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(135deg, 
+        #e8f4ff 0%, 
+        #9ec8ff 30%, 
+        #6aa3e8 60%, 
+        #4a8ccc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 
+        0 0 30px rgba(74, 158, 255, 0.5),
+        0 0 60px rgba(74, 158, 255, 0.3);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    animation: textGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+    from {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) 
+                drop-shadow(0 0 20px rgba(74, 158, 255, 0.3));
+    }
+    to {
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7)) 
+                drop-shadow(0 0 40px rgba(74, 158, 255, 0.6));
+    }
+}
+
+/* Decorative elements around logo */
+.deco-element {
+    position: absolute;
+    background: rgba(74, 158, 255, 0.2);
+    border-radius: 2px;
+}
+
+.deco-1 {
+    width: 60px;
+    height: 3px;
+    top: 20%;
+    right: -80px;
+    animation: slideH 4s ease-in-out infinite;
+}
+
+.deco-2 {
+    width: 3px;
+    height: 60px;
+    top: -80px;
+    left: 20%;
+    animation: slideV 4s ease-in-out infinite 0.5s;
+}
+
+.deco-3 {
+    width: 40px;
+    height: 3px;
+    bottom: 30%;
+    left: -70px;
+    animation: slideH 4s ease-in-out infinite 1s;
+}
+
+.deco-4 {
+    width: 3px;
+    height: 40px;
+    bottom: -70px;
+    right: 30%;
+    animation: slideV 4s ease-in-out infinite 1.5s;
+}
+
+@keyframes slideH {
+    0%, 100% { transform: translateX(0); opacity: 0.3; }
+    50% { transform: translateX(10px); opacity: 0.8; }
+}
+
+@keyframes slideV {
+    0%, 100% { transform: translateY(0); opacity: 0.3; }
+    50% { transform: translateY(10px); opacity: 0.8; }
+}
+
+/* Subtitle */
+.subtitle {
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 12px;
+    color: rgba(156, 200, 255, 0.8);
+    text-transform: uppercase;
+}
+
+/* Corner decorations */
+.corner-deco {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 2px solid rgba(74, 158, 255, 0.2);
+    z-index: 3;
+}
+
+.corner-deco::before,
+.corner-deco::after {
+    content: '';
+    position: absolute;
+    background: rgba(74, 158, 255, 0.3);
+}
+
+.top-left {
+    top: 40px;
+    left: 40px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.top-left::before {
+    width: 40px;
+    height: 2px;
+    top: -2px;
+    left: -2px;
+}
+
+.top-left::after {
+    width: 2px;
+    height: 40px;
+    top: -2px;
+    left: -2px;
+}
+
+.bottom-right {
+    bottom: 40px;
+    right: 40px;
+    border-left: none;
+    border-top: none;
+}
+
+.bottom-right::before {
+    width: 40px;
+    height: 2px;
+    bottom: -2px;
+    right: -2px;
+}
+
+.bottom-right::after {
+    width: 2px;
+    height: 40px;
+    bottom: -2px;
+    right: -2px;
+}
+
+/* Grid overlay */
+.grid-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(74, 158, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74, 158, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.5;
+    z-index: 0;
+}

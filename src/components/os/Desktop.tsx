@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import Image from 'next/image';
 import TopBar from './TopBar';
 import Dock from './Dock';
 import Window from './Window';
-import { APPS_CONFIG, AppConfig } from '@/lib/apps.config';
+import { APPS_CONFIG } from '@/lib/apps.config';
 import FileExplorer from '../apps/FileExplorer';
 import Settings from '../apps/Settings';
 import Calculator from '../apps/Calculator';
@@ -18,8 +17,8 @@ import Clock from '../apps/Clock';
 import TaskManager from '../apps/TaskManager';
 import TaskListWidget from './TaskListWidget';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Task } from '@/lib/types';
+import AnimatedWallpaper from './AnimatedWallpaper';
 
 
 export interface WindowInstance {
@@ -54,20 +53,16 @@ export default function Desktop() {
   const [nextZIndex, setNextZIndex] = useState(10);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(initialGalleryPhotos);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [useAnimatedWallpaper, setUseAnimatedWallpaper] = useState(true);
 
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
-  
-  const initialBgImage = PlaceHolderImages.find(p => p.id === 'desktop-background');
-  const [backgroundImage, setBackgroundImage] = useState(initialBgImage?.imageUrl ?? '');
-  const [backgroundAlt, setBackgroundAlt] = useState(initialBgImage?.description ?? '');
-  const [backgroundHint, setBackgroundHint] = useState(initialBgImage?.imageHint ?? '');
 
   const handleSetWallpaper = useCallback((photo: { url: string, hint: string, description: string }) => {
-    setBackgroundImage(photo.url);
-    setBackgroundAlt(photo.description);
-    setBackgroundHint(photo.hint);
+    // For now, setting a wallpaper from gallery will disable the animated one.
+    // A more robust solution could allow toggling.
+    setUseAnimatedWallpaper(false);
   }, []);
 
   const addPhotoToGallery = useCallback((photoDataUrl: string) => {
@@ -225,16 +220,10 @@ export default function Desktop() {
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
     >
-      {backgroundImage && (
-        <Image
-          src={backgroundImage}
-          alt={backgroundAlt}
-          fill
-          className="-z-10 object-cover"
-          data-ai-hint={backgroundHint}
-          priority
-        />
-      )}
+      <div className="absolute inset-0 -z-10">
+        <AnimatedWallpaper />
+      </div>
+
       <TopBar />
       <div className="flex-grow relative">
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
