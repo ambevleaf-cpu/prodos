@@ -11,9 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
-import Link from 'next/link';
 
 interface SearchDialogProps {
   open: boolean;
@@ -69,32 +68,16 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
           {isPending && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           
-          {state.results && !isPending && (
-             <Card className="w-full max-w-lg">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {state.results.refinedQuery && (
-                       <div>
-                          <h3 className="font-semibold text-lg mb-2">Refined Query</h3>
-                          <p className="text-muted-foreground bg-muted p-3 rounded-md">
-                            {state.results.refinedQuery}
-                          </p>
-                        </div>
-                    )}
-                    {state.results.searchUrl && (
-                       <div>
-                          <h3 className="font-semibold text-lg mb-2">Search Results</h3>
-                          <Link href={state.results.searchUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" className="w-full">
-                              <LinkIcon className="mr-2 h-4 w-4" />
-                              Open Google Search Results
-                            </Button>
-                          </Link>
-                        </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+          {state.results?.searchUrl && !isPending && (
+            <Card className="w-full h-full">
+              <CardContent className="p-0 h-full">
+                <iframe
+                  src={state.results.searchUrl}
+                  className="w-full h-full border-0 rounded-b-lg"
+                  title="Google Search Results"
+                ></iframe>
+              </CardContent>
+            </Card>
           )}
         </div>
       </DialogContent>
