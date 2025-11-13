@@ -22,7 +22,7 @@ export default function TopBar() {
     <>
       <header className="w-full h-8 flex items-center justify-between px-4 bg-white/30 dark:bg-black/30 backdrop-blur-lg text-sm font-medium z-40">
         <div>
-          <span className="font-bold">VisionOS</span> Explorer
+          <span className="font-bold">Prod</span> OS
         </div>
         <div className="flex items-center gap-4">
           <Button

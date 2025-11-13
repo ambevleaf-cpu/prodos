@@ -39,7 +39,7 @@ export const fileSystem: { [key: string]: FileSystemNode } = {
   'Applications': {
     type: 'folder',
     children: {
-      'VisionOS Explorer': { type: 'file' },
+      'Prod OS': { type: 'file' },
     },
   },
   'system_config.json': { type: 'file' },
