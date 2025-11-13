@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchDialog from './SearchDialog';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export default function TopBar() {
   const [currentTime, setCurrentTime] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const auth = useAuth();
 
   useEffect(() => {
     const updateClock = () => {
@@ -17,6 +20,11 @@ export default function TopBar() {
     const timerId = setInterval(updateClock, 1000);
     return () => clearInterval(timerId);
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    // The useUser hook in the Home page will detect the change and redirect to login.
+  };
 
   return (
     <>
@@ -32,6 +40,14 @@ export default function TopBar() {
             onClick={() => setIsSearchOpen(true)}
           >
             <Search className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-4 h-4" />
           </Button>
           <span>{currentTime}</span>
         </div>
