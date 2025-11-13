@@ -13,6 +13,7 @@ import Gallery from '../apps/Gallery';
 import YouTube from '../apps/YouTube';
 import NotesApp from '../apps/Notes';
 import Translator from '../apps/Translator';
+import Clock from '../apps/Clock';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 
 export interface WindowInstance {
@@ -75,8 +76,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: app.id === 'calculator' ? 350 : 800,
-      height: app.id === 'calculator' ? 450 : 600,
+      width: ['calculator', 'clock'].includes(app.id) ? 450 : 800,
+      height: ['calculator', 'clock'].includes(app.id) ? 600 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
     };
@@ -107,6 +108,7 @@ export default function Desktop() {
     youtube: YouTube,
     notes: NotesApp,
     translator: Translator,
+    clock: Clock,
   }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
