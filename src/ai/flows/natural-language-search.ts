@@ -35,7 +35,7 @@ const naturalLanguageSearchFlow = ai.defineFlow(
     outputSchema: NaturalLanguageSearchOutputSchema,
   },
   async (input) => {
-    const searchUrl = await performGoogleSearch(input);
+    const { searchUrl } = await performGoogleSearch(input);
     return {
       searchUrl,
     };
