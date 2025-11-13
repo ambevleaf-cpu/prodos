@@ -26,7 +26,7 @@ import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import NextImage from 'next/image';
 
 interface SettingsProps {
-  onSetWallpaper?: (photo: GalleryPhoto) => void;
+  onSetWallpaper?: (photo: { url: string; hint: string; description: string; }) => void;
 }
 
 export default function Settings({ onSetWallpaper }: SettingsProps) {
@@ -60,7 +60,7 @@ export default function Settings({ onSetWallpaper }: SettingsProps) {
                   <button
                     key={photo.id}
                     className="relative rounded-md overflow-hidden group aspect-square focus:ring-2 focus:ring-ring focus:outline-none"
-                    onClick={() => onSetWallpaper && onSetWallpaper(photo)}
+                    onClick={() => onSetWallpaper && onSetWallpaper({url: photo.url, hint: photo.hint, description: photo.id})}
                   >
                     <NextImage
                       src={photo.url}

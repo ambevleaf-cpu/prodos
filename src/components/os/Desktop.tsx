@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
+import Image from 'next/image';
 import TopBar from './TopBar';
 import Dock from './Dock';
 import Window from './Window';
@@ -15,6 +16,7 @@ import NotesApp from '../apps/Notes';
 import Translator from '../apps/Translator';
 import Clock from '../apps/Clock';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export interface WindowInstance {
   id: string;
@@ -28,11 +30,7 @@ export interface WindowInstance {
   isMinimized: boolean;
 }
 
-interface DesktopProps {
-  onSetWallpaper: (photo: GalleryPhoto) => void;
-}
-
-export default function Desktop({ onSetWallpaper }: DesktopProps) {
+export default function Desktop() {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   const [nextZIndex, setNextZIndex] = useState(10);
@@ -40,6 +38,17 @@ export default function Desktop({ onSetWallpaper }: DesktopProps) {
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+  
+  const initialBgImage = PlaceHolderImages.find(p => p.id === 'desktop-background');
+  const [backgroundImage, setBackgroundImage] = useState(initialBgImage?.imageUrl ?? '');
+  const [backgroundAlt, setBackgroundAlt] = useState(initialBgImage?.description ?? '');
+  const [backgroundHint, setBackgroundHint] = useState(initialBgImage?.imageHint ?? '');
+
+  const handleSetWallpaper = useCallback((photo: { url: string, hint: string, description: string }) => {
+    setBackgroundImage(photo.url);
+    setBackgroundAlt(photo.description);
+    setBackgroundHint(photo.hint);
+  }, []);
 
   const addPhotoToGallery = useCallback((photoDataUrl: string) => {
     const newPhoto: GalleryPhoto = {
@@ -105,7 +114,7 @@ export default function Desktop({ onSetWallpaper }: DesktopProps) {
 
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
-    settings: (props: any) => <Settings {...props} onSetWallpaper={onSetWallpaper} />,
+    settings: (props: any) => <Settings {...props} onSetWallpaper={handleSetWallpaper} />,
     calculator: Calculator,
     camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
     gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
@@ -113,7 +122,7 @@ export default function Desktop({ onSetWallpaper }: DesktopProps) {
     notes: NotesApp,
     translator: Translator,
     clock: Clock,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, onSetWallpaper]);
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, handleSetWallpaper]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
@@ -192,6 +201,16 @@ export default function Desktop({ onSetWallpaper }: DesktopProps) {
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
     >
+      {backgroundImage && (
+        <Image
+          src={backgroundImage}
+          alt={backgroundAlt}
+          fill
+          className="-z-10 object-cover"
+          data-ai-hint={backgroundHint}
+          priority
+        />
+      )}
       <TopBar />
       <div className="flex-grow relative">
         {openWindows.map(win => {
