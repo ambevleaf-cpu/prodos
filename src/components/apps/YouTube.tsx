@@ -15,9 +15,10 @@ export default function YouTube() {
     setSubmittedQuery(searchQuery);
   };
 
-  const embedUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
+  // Construct a Google Video search URL
+  const embedUrl = `https://www.google.com/search?q=${encodeURIComponent(
     submittedQuery
-  )}`;
+  )}&tbm=vid&igu=1`;
 
   return (
     <Card className="w-full h-full flex flex-col border-none shadow-none rounded-none">
@@ -25,7 +26,7 @@ export default function YouTube() {
         <form onSubmit={handleSearch} className="flex w-full items-center space-x-2">
           <Input
             type="text"
-            placeholder="Search YouTube..."
+            placeholder="Search Videos on Google..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-grow"
@@ -41,9 +42,8 @@ export default function YouTube() {
             key={submittedQuery} // Re-renders the iframe when the query changes
             src={embedUrl}
             className="w-full h-full border-0 rounded-b-lg"
-            title="YouTube video search results"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
+            title="Google Video search results"
+            sandbox="allow-scripts allow-same-origin allow-forms"
           ></iframe>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
