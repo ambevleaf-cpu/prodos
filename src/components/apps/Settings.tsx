@@ -22,8 +22,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut } from "lucide-react";
 import { useState } from "react";
-import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
+import { galleryPhotos } from '@/lib/gallery-data';
 import NextImage from 'next/image';
+import { useUser } from "@/firebase";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface SettingsProps {
   onSetWallpaper?: (photo: { url: string; hint: string; description: string; }) => void;
@@ -32,6 +34,7 @@ interface SettingsProps {
 
 export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   const [volume, setVolume] = useState([50]);
   const [wifi, setWifi] = useState(true);
 
@@ -45,6 +48,33 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <UserCircle className="w-5 h-5" /> Account
+            </h3>
+            <div className="rounded-lg border p-4 flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={user?.photoURL ?? undefined} alt={user?.displayName ?? 'User'} />
+                    <AvatarFallback>
+                        {user?.displayName?.charAt(0) || user?.email?.charAt(0)}
+                    </AvatarFallback>
+                </Avatar>
+                <div className="flex-grow">
+                    <h4 className="font-semibold text-lg">{user?.displayName || 'User'}</h4>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                </div>
+                <Button
+                    variant="destructive"
+                    onClick={onSignOut}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                </Button>
+            </div>
+          </div>
+        
+          <Separator />
+          
           <div className="space-y-4">
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Palette className="w-5 h-5" /> Personalization
@@ -162,29 +192,6 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                 }}
               >
                 Check for Updates
-              </Button>
-            </div>
-          </div>
-          
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <UserCircle className="w-5 h-5" /> Account
-            </h3>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <Label>Session</Label>
-                <p className="text-sm text-muted-foreground">
-                  End your current session and sign out.
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                onClick={onSignOut}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
               </Button>
             </div>
           </div>
