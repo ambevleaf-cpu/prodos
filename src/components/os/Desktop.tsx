@@ -114,16 +114,12 @@ export default function Desktop() {
     const app = APPS_CONFIG.find(a => a.id === appId);
     if (!app) return;
 
-    const existingWindow = windows.find(w => w.appId === app.id && !w.isMinimized);
+    // Check if a window for this app is already open and not minimized
+    const existingWindow = windows.find(w => w.appId === appId);
     if (existingWindow) {
-      focusWindow(existingWindow.id);
-      return;
-    }
-
-    const minimizedWindow = windows.find(w => w.appId === app.id && w.isMinimized);
-    if (minimizedWindow) {
-      setWindows(prev => prev.map(w => w.id === minimizedWindow.id ? { ...w, isMinimized: false, zIndex: nextZIndex + 1 } : w));
-      setActiveWindowId(minimizedWindow.id);
+      // If it's minimized, unminimize it. Otherwise, just focus.
+      setWindows(prev => prev.map(w => w.id === existingWindow.id ? { ...w, isMinimized: false, zIndex: nextZIndex } : w));
+      setActiveWindowId(existingWindow.id);
       setNextZIndex(prev => prev + 1);
       return;
     }
@@ -143,7 +139,7 @@ export default function Desktop() {
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
-  }, [windows, nextZIndex, focusWindow]);
+  }, [windows, nextZIndex]);
 
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
@@ -261,7 +257,7 @@ e.stopPropagation();
               onDragStart={(e) => onDragStart(win.id, e)}
               onResizeStart={(e) => onResizeStart(win.id, e)}
             >
-              {AppComponent ? <AppComponent openApp={openApp} /> : <div>App not found</div>}
+              {AppComponent ? <AppComponent /> : <div>App not found</div>}
             </Window>
           );
         })}
