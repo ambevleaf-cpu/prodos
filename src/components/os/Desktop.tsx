@@ -10,6 +10,7 @@ import Settings from '../apps/Settings';
 import Calculator from '../apps/Calculator';
 import CameraApp from '../apps/Camera';
 import Gallery from '../apps/Gallery';
+import YouTube from '../apps/YouTube';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 
 export interface WindowInstance {
@@ -48,14 +49,6 @@ export default function Desktop() {
     setGalleryPhotos(prev => prev.filter(p => p.id !== photoId));
   }, []);
 
-  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
-    fileExplorer: FileExplorer,
-    settings: Settings,
-    calculator: Calculator,
-    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} />,
-    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} />,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery]);
-
   const openApp = useCallback((appId: string) => {
     const app = APPS_CONFIG.find(a => a.id === appId);
     if (!app) return;
@@ -90,6 +83,15 @@ export default function Desktop() {
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
   }, [windows, nextZIndex]);
+
+  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
+    fileExplorer: FileExplorer,
+    settings: Settings,
+    calculator: Calculator,
+    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
+    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
+    youtube: YouTube,
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
