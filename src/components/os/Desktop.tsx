@@ -11,6 +11,7 @@ import Calculator from '../apps/Calculator';
 import CameraApp from '../apps/Camera';
 import Gallery from '../apps/Gallery';
 import YouTube from '../apps/YouTube';
+import NotesApp from '../apps/Notes';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 
 export interface WindowInstance {
@@ -83,20 +84,7 @@ export default function Desktop() {
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
   }, [windows, nextZIndex]);
-
-  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
-    fileExplorer: FileExplorer,
-    settings: Settings,
-    calculator: Calculator,
-    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
-    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
-    youtube: YouTube,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp]);
   
-  const openAppConfig = useCallback((app: AppConfig) => {
-    openApp(app.id);
-  }, [openApp]);
-
   const focusWindow = useCallback((windowId: string) => {
     if (activeWindowId === windowId) return;
 
@@ -108,6 +96,21 @@ export default function Desktop() {
     setActiveWindowId(windowId);
     setNextZIndex(prev => prev + 1);
   }, [activeWindowId, nextZIndex]);
+  
+  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
+    fileExplorer: FileExplorer,
+    settings: Settings,
+    calculator: Calculator,
+    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
+    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
+    youtube: YouTube,
+    notes: NotesApp,
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, focusWindow]);
+  
+  const openAppConfig = useCallback((app: AppConfig) => {
+    openApp(app.id);
+  }, [openApp]);
+
 
   const closeWindow = useCallback((windowId: string) => {
     setWindows(prev => prev.filter(w => w.id !== windowId));
@@ -134,7 +137,7 @@ export default function Desktop() {
   
   const onResizeStart = useCallback((windowId: string, e: React.MouseEvent) => {
     focusWindow(windowId);
-e.stopPropagation();
+    e.stopPropagation();
     const window = windows.find(w => w.id === windowId);
     if (!window) return;
     resizeInfo.current = {
