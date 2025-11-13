@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { performGoogleSearch } from './google-search';
 
 const NaturalLanguageSearchInputSchema = z.object({
   query: z.string().describe('The natural language query to use for search.'),
@@ -40,20 +41,6 @@ async (input) => {
   // Placeholder implementation for refining the search query.
   // In a real application, this would use an external search API like Google.
   return `Refined: ${input.originalQuery} - ${input.reason}`;
-}
-);
-
-const performGoogleSearch = ai.defineTool({
-    name: 'performGoogleSearch',
-    description: 'Performs a google search and returns the results.',
-    inputSchema: z.object({
-        query: z.string().describe('The query to search for on Google'),
-    }),
-    outputSchema: z.array(z.string()).describe('A list of search results from Google.'),
-},
-async (input) => {
-    // Placeholder implementation for calling google search API.
-    return [`Google Result 1 for: ${input.query}`, `Google Result 2 for: ${input.query}`];
 }
 );
 
