@@ -5,6 +5,15 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ClockApp() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -23,7 +32,10 @@ export default function ClockApp() {
     { city: 'Tokyo', timezone: 'Asia/Tokyo' },
     { city: 'Dubai', timezone: 'Asia/Dubai' }
   ]);
+  const [ringingAlarm, setRingingAlarm] = useState<{id: number, time: string, label: string, enabled: boolean} | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
 
   // Update current time every second
   useEffect(() => {
@@ -39,6 +51,10 @@ export default function ClockApp() {
         audioContextRef.current = new (window.AudioContext)();
     }
     const audioContext = audioContextRef.current;
+    
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
     
     const createTone = (frequency: number, startTime: number, duration: number, volume = 0.15) => {
       const oscillator = audioContext.createOscillator();
@@ -76,6 +92,26 @@ export default function ClockApp() {
     });
   };
 
+  const startRinging = (alarm: {id: number, time: string, label: string, enabled: boolean}) => {
+    setRingingAlarm(alarm);
+    playSound(); // Play immediately
+    audioIntervalRef.current = setInterval(playSound, 8000); // Repeat every 8 seconds
+  };
+
+  const stopRinging = () => {
+    if (audioIntervalRef.current) {
+      clearInterval(audioIntervalRef.current);
+      audioIntervalRef.current = null;
+    }
+    if (ringingAlarm) {
+        // Disable the alarm so it doesn't ring again
+        setAlarms(alarms.map(a => 
+            a.id === ringingAlarm.id ? { ...a, enabled: false } : a
+        ));
+    }
+    setRingingAlarm(null);
+  };
+
   // Timer countdown
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -84,7 +120,7 @@ export default function ClockApp() {
         setTimerTimeLeft(prev => {
           if (prev <= 1) {
             setTimerActive(false);
-            playSound();
+            startRinging({id: -1, time: '', label: 'Timer Finished', enabled: true});
             return 0;
           }
           return prev - 1;
@@ -107,6 +143,8 @@ export default function ClockApp() {
 
   // Check alarms
   useEffect(() => {
+    if (ringingAlarm) return;
+
     alarms.forEach(alarm => {
       if (alarm.enabled) {
         const now = new Date();
@@ -115,12 +153,11 @@ export default function ClockApp() {
         alarmTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         
         if (alarmTime.getHours() === now.getHours() && alarmTime.getMinutes() === now.getMinutes() && now.getSeconds() === 0) {
-          playSound();
-          alert(`⏰ Alarm: ${alarm.label || 'Wake up!'}`);
+          startRinging(alarm);
         }
       }
     });
-  }, [currentTime, alarms]);
+  }, [currentTime, alarms, ringingAlarm]);
 
 
   const formatTime = (date: Date) => {
@@ -486,6 +523,19 @@ export default function ClockApp() {
               {renderContent()}
             </div>
         </CardContent>
+        <AlertDialog open={!!ringingAlarm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>⏰ {ringingAlarm?.label || 'Alarm'} ⏰</AlertDialogTitle>
+              <AlertDialogDescription>
+                It's {ringingAlarm?.time}. Time to wake up!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={stopRinging}>Stop</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </Card>
   );
 }
