@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Circle, RotateCw, Settings, X, Image as ImageIcon, Zap, ZapOff, Download, Share2, Sparkles } from 'lucide-react';
+import { Camera, RotateCw, Settings, X, Image as ImageIcon, Zap, ZapOff, Download, Share2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export default function CameraApp() {
+interface CameraAppProps {
+  onCapture: (photoDataUrl: string) => void;
+  openApp?: (appId: string) => void;
+}
+
+export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
   const { toast } = useToast();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
@@ -52,7 +57,7 @@ export default function CameraApp() {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [facingMode]);
+  }, [facingMode, toast]);
 
   const capturePhoto = () => {
     if (!hasCameraPermission) {
@@ -82,6 +87,13 @@ export default function CameraApp() {
       setTimeout(() => {
         setPhoto(imageData);
         setCapturing(false);
+        if(onCapture) {
+          onCapture(imageData);
+          toast({
+            title: "Photo Captured!",
+            description: "Saved to gallery.",
+          });
+        }
       }, 200);
     }
   };
@@ -92,6 +104,12 @@ export default function CameraApp() {
 
   const closePhoto = () => {
     setPhoto(null);
+  };
+  
+  const handleOpenGallery = () => {
+    if(openApp) {
+        openApp('gallery');
+    }
   };
 
   return (
@@ -189,7 +207,7 @@ export default function CameraApp() {
 
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 via-black/30 to-transparent pt-12 pb-10">
         <div className="flex justify-center items-center gap-16 px-6">
-          <button className="group relative">
+          <button className="group relative" onClick={handleOpenGallery}>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
             <div className="relative p-5 bg-white/10 backdrop-blur-xl rounded-3xl text-white hover:bg-white/20 transition-all duration-300 border border-white/20 shadow-2xl group-hover:scale-110">
               <ImageIcon size={32} />

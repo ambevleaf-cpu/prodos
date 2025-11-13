@@ -10,6 +10,7 @@ import Settings from '../apps/Settings';
 import Calculator from '../apps/Calculator';
 import CameraApp from '../apps/Camera';
 import Gallery from '../apps/Gallery';
+import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 
 export interface WindowInstance {
   id: string;
@@ -23,21 +24,33 @@ export interface WindowInstance {
   isMinimized: boolean;
 }
 
-const appComponentMap: { [key: string]: React.ComponentType<any> } = {
-  fileExplorer: FileExplorer,
-  settings: Settings,
-  calculator: Calculator,
-  camera: CameraApp,
-  gallery: Gallery,
-};
-
 export default function Desktop() {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   const [nextZIndex, setNextZIndex] = useState(10);
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(initialGalleryPhotos);
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+
+  const addPhotoToGallery = useCallback((photoDataUrl: string) => {
+    const newPhoto: GalleryPhoto = {
+      id: `photo-${Date.now()}`,
+      url: photoDataUrl,
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      type: 'photo',
+      hint: 'captured photo',
+    };
+    setGalleryPhotos(prev => [newPhoto, ...prev]);
+  }, []);
+
+  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
+    fileExplorer: FileExplorer,
+    settings: Settings,
+    calculator: Calculator,
+    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} />,
+    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} />,
+  }), [addPhotoToGallery, galleryPhotos]);
 
   const openApp = useCallback((appId: string) => {
     const app = APPS_CONFIG.find(a => a.id === appId);

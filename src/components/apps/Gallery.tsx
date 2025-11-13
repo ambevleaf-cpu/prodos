@@ -2,20 +2,20 @@
 
 import React, { useState } from 'react';
 import { X, Heart, Share2, Download, Trash2, MoreVertical, Grid3x3, Image as ImageIcon, Video, Calendar, Star, Search, Plus, Camera } from 'lucide-react';
-import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
+import { type GalleryPhoto } from '@/lib/gallery-data';
 import NextImage from 'next/image';
 import { APPS_CONFIG } from '@/lib/apps.config';
 
 interface GalleryProps {
   openApp?: (appId: string) => void;
+  photos: GalleryPhoto[];
 }
 
-export default function Gallery({ openApp }: GalleryProps) {
+export default function Gallery({ openApp, photos }: GalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [favorites, setFavorites] = useState<string[]>(['2', '5']);
   const [view, setView] = useState('all');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [photos] = useState<GalleryPhoto[]>(galleryPhotos);
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => 
@@ -48,10 +48,14 @@ export default function Gallery({ openApp }: GalleryProps) {
   });
 
   const groupedPhotos = filteredPhotos.reduce((acc, photo) => {
-    if (!acc[photo.date]) acc[photo.date] = [];
-    acc[photo.date].push(photo);
+    const photoDate = new Date(photo.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (!acc[photoDate]) acc[photoDate] = [];
+    acc[photoDate].push(photo);
     return acc;
   }, {} as Record<string, GalleryPhoto[]>);
+
+  const sortedDates = Object.keys(groupedPhotos).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
 
   return (
     <div className="w-full h-full bg-black text-white flex flex-col rounded-b-lg overflow-hidden">
@@ -166,14 +170,14 @@ export default function Gallery({ openApp }: GalleryProps) {
               </button>
             </div>
           ) : (
-            Object.entries(groupedPhotos).map(([date, datePhotos]) => (
+            sortedDates.map((date) => (
               <div key={date} className="mb-6">
                 <h2 className="text-white text-md font-semibold mb-3 flex items-center gap-2">
                   <Calendar size={18} className="text-purple-400" />
                   {date}
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {datePhotos.map((photo) => (
+                  {groupedPhotos[date].map((photo) => (
                     <button
                       key={photo.id}
                       onClick={() => setSelectedPhoto(photo)}
