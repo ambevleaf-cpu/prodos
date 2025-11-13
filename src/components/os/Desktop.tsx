@@ -23,7 +23,7 @@ export interface WindowInstance {
   isMinimized: boolean;
 }
 
-const appComponentMap: { [key: string]: React.ComponentType } = {
+const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   fileExplorer: FileExplorer,
   settings: Settings,
   calculator: Calculator,
@@ -39,7 +39,10 @@ export default function Desktop() {
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
 
-  const openApp = useCallback((app: AppConfig) => {
+  const openApp = useCallback((appId: string) => {
+    const app = APPS_CONFIG.find(a => a.id === appId);
+    if (!app) return;
+
     const existingWindow = windows.find(w => w.appId === app.id && !w.isMinimized);
     if (existingWindow) {
       focusWindow(existingWindow.id);
@@ -70,6 +73,10 @@ export default function Desktop() {
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
   }, [windows, nextZIndex]);
+  
+  const openAppConfig = useCallback((app: AppConfig) => {
+    openApp(app.id);
+  }, [openApp]);
 
   const focusWindow = useCallback((windowId: string) => {
     if (activeWindowId === windowId) return;
@@ -170,12 +177,12 @@ e.stopPropagation();
               onDragStart={(e) => onDragStart(win.id, e)}
               onResizeStart={(e) => onResizeStart(win.id, e)}
             >
-              {AppComponent ? <AppComponent /> : <div>App not found</div>}
+              {AppComponent ? <AppComponent openApp={openApp} /> : <div>App not found</div>}
             </Window>
           );
         })}
       </div>
-      <Dock onAppClick={openApp} openWindows={windows} onWindowClick={focusWindow} />
+      <Dock onAppClick={openAppConfig} openWindows={windows} onWindowClick={focusWindow} />
     </div>
   );
 }

@@ -4,8 +4,13 @@ import React, { useState } from 'react';
 import { X, Heart, Share2, Download, Trash2, MoreVertical, Grid3x3, Image as ImageIcon, Video, Calendar, Star, Search, Plus, Camera } from 'lucide-react';
 import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import NextImage from 'next/image';
+import { APPS_CONFIG } from '@/lib/apps.config';
 
-export default function Gallery() {
+interface GalleryProps {
+  openApp?: (appId: string) => void;
+}
+
+export default function Gallery({ openApp }: GalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [favorites, setFavorites] = useState<string[]>(['2', '5']);
   const [view, setView] = useState('all');
@@ -16,6 +21,15 @@ export default function Gallery() {
     setFavorites(prev => 
       prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
     );
+  };
+  
+  const handleOpenCamera = () => {
+    if (openApp) {
+      const cameraApp = APPS_CONFIG.find(app => app.id === 'camera');
+      if (cameraApp) {
+        openApp(cameraApp.id);
+      }
+    }
   };
 
   const filteredPhotos = photos.filter(p => {
@@ -144,7 +158,8 @@ export default function Gallery() {
               </div>
               <h2 className="text-xl font-bold text-white mb-2">No Photos Yet</h2>
               <p className="text-gray-400 mb-6">Start capturing moments to see them here</p>
-              <button 
+              <button
+                onClick={handleOpenCamera}
                 className="px-6 py-3 rounded-full text-white font-semibold bg-purple-600 hover:bg-purple-500 transition-all shadow-[0_8px_30px_rgba(168,85,247,0.4)]"
               >
                 Take a Photo
@@ -190,7 +205,10 @@ export default function Gallery() {
               </div>
             ))
           )}
-           <button className="fixed bottom-12 right-12 p-4 rounded-full text-white bg-purple-600 shadow-[0_10px_40px_rgba(168,85,247,0.5)] hover:bg-purple-500 transition-all hover:scale-110">
+           <button 
+            onClick={handleOpenCamera}
+            className="fixed bottom-12 right-12 p-4 rounded-full text-white bg-purple-600 shadow-[0_10px_40px_rgba(168,85,247,0.5)] hover:bg-purple-500 transition-all hover:scale-110"
+          >
             <Plus size={28} />
           </button>
         </div>
