@@ -2,7 +2,8 @@
 
 import { naturalLanguageSearch, type NaturalLanguageSearchOutput } from '@/ai/flows/natural-language-search';
 import { type TranslateTextInput, type TranslateTextOutput } from '@/ai/flows/translator-flow';
-import { textToSpeech, type TextToSpeechInput, type TextToSpeechOutput } from '@/ai/flows/tts-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
+import { type TextToSpeechInput, type TextToSpeechOutput } from './schema';
 
 const dictionary = {
   'hello': 'नमस्ते',
