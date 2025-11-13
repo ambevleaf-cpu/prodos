@@ -5,6 +5,7 @@ import { X, Heart, Share2, Download, Trash2, MoreVertical, Grid3x3, Image as Ima
 import { type GalleryPhoto } from '@/lib/gallery-data';
 import NextImage from 'next/image';
 import { APPS_CONFIG } from '@/lib/apps.config';
+import { useToast } from '@/hooks/use-toast';
 
 interface GalleryProps {
   openApp?: (appId: string) => void;
@@ -12,6 +13,7 @@ interface GalleryProps {
 }
 
 export default function Gallery({ openApp, photos }: GalleryProps) {
+  const { toast } = useToast();
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [favorites, setFavorites] = useState<string[]>(['2', '5']);
   const [view, setView] = useState('all');
@@ -29,6 +31,24 @@ export default function Gallery({ openApp, photos }: GalleryProps) {
       if (cameraApp) {
         openApp(cameraApp.id);
       }
+    }
+  };
+
+  const handleShare = async () => {
+    if (!selectedPhoto) return;
+    try {
+      await navigator.clipboard.writeText(selectedPhoto.url);
+      toast({
+        title: "Link Copied!",
+        description: "The photo URL has been copied to your clipboard.",
+      });
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      toast({
+        variant: "destructive",
+        title: "Failed to copy",
+        description: "Could not copy the link to your clipboard.",
+      });
     }
   };
 
@@ -92,7 +112,7 @@ export default function Gallery({ openApp, photos }: GalleryProps) {
                 >
                   <Heart size={28} fill={favorites.includes(selectedPhoto.id) ? 'currentColor' : 'none'} />
                 </button>
-                <button className="p-5 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors">
+                <button onClick={handleShare} className="p-5 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors">
                   <Share2 size={28} />
                 </button>
                 <button className="p-5 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors">
