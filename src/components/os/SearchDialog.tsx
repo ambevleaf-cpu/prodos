@@ -11,8 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2 } from 'lucide-react';
-import { Card } from '../ui/card';
+import { Search, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
+import Link from 'next/link';
 
 interface SearchDialogProps {
   open: boolean;
@@ -38,7 +39,7 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl h-[80vh]">
+      <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Search</DialogTitle>
           <DialogDescription>
@@ -53,6 +54,7 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
               placeholder="e.g., 'Find my presentation from last week'"
               required
               className="flex-grow"
+              autoComplete="off"
             />
             <Button type="submit" size="icon" disabled={isPending}>
               {isPending ? (
@@ -63,15 +65,35 @@ export default function SearchDialog({ open, onOpenChange }: SearchDialogProps) 
             </Button>
           </div>
         </form>
-        <div className="mt-4 flex-grow">
+        <div className="mt-4 flex-grow flex items-center justify-center">
+          {isPending && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-          {state.results?.searchUrl && (
-             <Card className="w-full h-full">
-                <iframe
-                  src={state.results.searchUrl}
-                  className="w-full h-full border-0"
-                  title="Google Search"
-                />
+          
+          {state.results && !isPending && (
+             <Card className="w-full max-w-lg">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {state.results.refinedQuery && (
+                       <div>
+                          <h3 className="font-semibold text-lg mb-2">Refined Query</h3>
+                          <p className="text-muted-foreground bg-muted p-3 rounded-md">
+                            {state.results.refinedQuery}
+                          </p>
+                        </div>
+                    )}
+                    {state.results.searchUrl && (
+                       <div>
+                          <h3 className="font-semibold text-lg mb-2">Search Results</h3>
+                          <Link href={state.results.searchUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" className="w-full">
+                              <LinkIcon className="mr-2 h-4 w-4" />
+                              Open Google Search Results
+                            </Button>
+                          </Link>
+                        </div>
+                    )}
+                  </div>
+                </CardContent>
               </Card>
           )}
         </div>
