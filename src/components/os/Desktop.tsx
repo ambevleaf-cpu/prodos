@@ -64,6 +64,18 @@ export default function Desktop() {
   const deletePhotoFromGallery = useCallback((photoId: string) => {
     setGalleryPhotos(prev => prev.filter(p => p.id !== photoId));
   }, []);
+  
+  const focusWindow = useCallback((windowId: string) => {
+    if (activeWindowId === windowId) return;
+
+    setWindows(prevWindows =>
+      prevWindows.map(w =>
+        w.id === windowId ? { ...w, zIndex: nextZIndex, isMinimized: false } : w
+      )
+    );
+    setActiveWindowId(windowId);
+    setNextZIndex(prev => prev + 1);
+  }, [activeWindowId, nextZIndex]);
 
   const openApp = useCallback((appId: string) => {
     const app = APPS_CONFIG.find(a => a.id === appId);
@@ -98,19 +110,7 @@ export default function Desktop() {
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
-  }, [windows, nextZIndex]);
-  
-  const focusWindow = useCallback((windowId: string) => {
-    if (activeWindowId === windowId) return;
-
-    setWindows(prev =>
-      prev.map(w =>
-        w.id === windowId ? { ...w, zIndex: nextZIndex, isMinimized: false } : w
-      )
-    );
-    setActiveWindowId(windowId);
-    setNextZIndex(prev => prev + 1);
-  }, [activeWindowId, nextZIndex]);
+  }, [windows, nextZIndex, focusWindow]);
 
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
@@ -122,7 +122,7 @@ export default function Desktop() {
     notes: NotesApp,
     translator: Translator,
     clock: Clock,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, handleSetWallpaper]);
+  }), [handleSetWallpaper, addPhotoToGallery, openApp, galleryPhotos, deletePhotoFromGallery]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
