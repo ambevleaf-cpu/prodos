@@ -76,8 +76,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: ['calculator', 'clock'].includes(app.id) ? 450 : 800,
-      height: ['calculator', 'clock'].includes(app.id) ? 600 : 600,
+      width: app.id === 'calculator' ? 450 : (app.id === 'clock' ? 900 : 800),
+      height: app.id === 'clock' ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
     };
