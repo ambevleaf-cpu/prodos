@@ -2,6 +2,7 @@
 
 import { naturalLanguageSearch, type NaturalLanguageSearchOutput } from '@/ai/flows/natural-language-search';
 import { type TranslateTextInput, type TranslateTextOutput } from '@/ai/flows/translator-flow';
+import { textToSpeech, type TextToSpeechInput, type TextToSpeechOutput } from '@/ai/flows/tts-flow';
 
 const dictionary = {
   'hello': 'नमस्ते',
@@ -70,5 +71,22 @@ export async function handleTranslate(input: TranslateTextInput): Promise<{
     } catch (error) {
         console.error(error);
         return { result: null, error: 'An error occurred during translation.' };
+    }
+}
+
+export async function handleTextToSpeech(input: TextToSpeechInput): Promise<{
+  result: TextToSpeechOutput | null;
+  error: string | null;
+}> {
+    if (!input.text) {
+        return { result: null, error: 'Please enter text to generate speech.' };
+    }
+    
+    try {
+        const result = await textToSpeech(input);
+        return { result, error: null };
+    } catch (error) {
+        console.error(error);
+        return { result: null, error: 'An error occurred during speech generation.' };
     }
 }

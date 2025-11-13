@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRightLeft, Loader2 } from 'lucide-react';
-import { handleTranslate } from '@/app/actions';
+import { ArrowRightLeft, Loader2, Volume2 } from 'lucide-react';
+import { handleTranslate, handleTextToSpeech } from '@/app/actions';
 import {
   Select,
   SelectContent,
@@ -22,7 +22,10 @@ export default function Translator() {
   const [sourceLang, setSourceLang] = useState<Language>('English');
   const [targetLang, setTargetLang] = useState<Language>('Hindi');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState<null | 'input' | 'output'>(null);
   const [error, setError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
 
   const swapLanguages = () => {
     const tempLang = sourceLang;
@@ -52,10 +55,30 @@ export default function Translator() {
     }
     setIsLoading(false);
   };
+  
+  const onSpeak = async (text: string, type: 'input' | 'output') => {
+    if (!text.trim()) return;
+
+    setIsSpeaking(type);
+    setError(null);
+
+    const response = await handleTextToSpeech({ text });
+    
+    if (response.error) {
+      setError(response.error);
+    } else if (response.result?.audioUrl) {
+        if(audioRef.current) {
+            audioRef.current.src = response.result.audioUrl;
+            audioRef.current.play();
+        }
+    }
+    setIsSpeaking(null);
+  }
 
   return (
     <Card className="w-full h-full flex flex-col border-none shadow-none rounded-none">
       <CardContent className="p-4 flex flex-col flex-grow gap-4">
+        <audio ref={audioRef} className="hidden" />
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <Select value={sourceLang} onValueChange={(value: Language) => setSourceLang(value)}>
                 <SelectTrigger>
@@ -83,13 +106,18 @@ export default function Translator() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 flex-grow">
-          <Textarea
-            placeholder={`Enter text in ${sourceLang}...`}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 text-base resize-none"
-          />
-          <div className="relative flex-1">
+            <div className="relative flex-1 flex flex-col gap-2">
+                 <Textarea
+                    placeholder={`Enter text in ${sourceLang}...`}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    className="flex-1 text-base resize-none"
+                  />
+                  <Button size="icon" variant="outline" className="absolute bottom-2 right-2" onClick={() => onSpeak(inputText, 'input')} disabled={!inputText.trim() || !!isSpeaking}>
+                    {isSpeaking === 'input' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Volume2 className="w-5 h-5" />}
+                  </Button>
+            </div>
+          <div className="relative flex-1 flex flex-col gap-2">
              <Textarea
                 placeholder="Translation"
                 value={outputText}
@@ -101,6 +129,9 @@ export default function Translator() {
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
                )}
+                <Button size="icon" variant="outline" className="absolute bottom-2 right-2" onClick={() => onSpeak(outputText, 'output')} disabled={!outputText.trim() || !!isSpeaking}>
+                    {isSpeaking === 'output' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Volume2 className="w-5 h-5" />}
+                </Button>
           </div>
         </div>
 
