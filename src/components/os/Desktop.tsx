@@ -12,6 +12,7 @@ import CameraApp from '../apps/Camera';
 import Gallery from '../apps/Gallery';
 import YouTube from '../apps/YouTube';
 import NotesApp from '../apps/Notes';
+import Translator from '../apps/Translator';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 
 export interface WindowInstance {
@@ -96,7 +97,7 @@ export default function Desktop() {
     setActiveWindowId(windowId);
     setNextZIndex(prev => prev + 1);
   }, [activeWindowId, nextZIndex]);
-  
+
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
     settings: Settings,
@@ -105,7 +106,8 @@ export default function Desktop() {
     gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
     youtube: YouTube,
     notes: NotesApp,
-  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp, focusWindow]);
+    translator: Translator,
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery, openApp]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
