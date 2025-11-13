@@ -28,44 +28,16 @@ export async function naturalLanguageSearch(input: NaturalLanguageSearchInput): 
   return naturalLanguageSearchFlow(input);
 }
 
-const refineSearchQuery = ai.defineTool({
-  name: 'refineSearchQuery',
-  description: 'Refines the search query to provide better search results.',
-  inputSchema: z.object({
-    originalQuery: z.string().describe('The original search query.'),
-    reason: z.string().describe('The reason for refining the query.'),
-  }),
-  outputSchema: z.string().describe('The refined search query.'),
-},
-async (input) => {
-  return `Refined: ${input.originalQuery} - ${input.reason}`;
-}
-);
-
-const naturalLanguageSearchPrompt = ai.definePrompt({
-  name: 'naturalLanguageSearchPrompt',
-  input: {schema: NaturalLanguageSearchInputSchema},
-  output: {schema: NaturalLanguageSearchOutputSchema},
-  tools: [refineSearchQuery, performGoogleSearch],
-  prompt: `You are a search assistant that helps users find files, applications, and settings.
-  Use the provided tools to refine the search query if necessary and perform the final search.
-
-  User Query: {{{query}}}
-
-  If the query is ambiguous or can be improved, use the refineSearchQuery tool to get a better query.
-  Otherwise, use the performGoogleSearch tool to search for the query.
-
-  Return the search URL and the refined query (if applicable).`,
-});
-
 const naturalLanguageSearchFlow = ai.defineFlow(
   {
     name: 'naturalLanguageSearchFlow',
     inputSchema: NaturalLanguageSearchInputSchema,
     outputSchema: NaturalLanguageSearchOutputSchema,
   },
-  async input => {
-    const {output} = await naturalLanguageSearchPrompt(input);
-    return output!;
+  async (input) => {
+    const searchUrl = await performGoogleSearch(input);
+    return {
+      searchUrl,
+    };
   }
 );
