@@ -34,6 +34,20 @@ export interface WindowInstance {
   isMinimized: boolean;
 }
 
+const appComponentMap: { [key: string]: React.ComponentType<any> } = {
+  fileExplorer: FileExplorer,
+  settings: Settings,
+  calculator: Calculator,
+  camera: CameraApp,
+  gallery: Gallery,
+  youtube: YouTube,
+  notes: NotesApp,
+  translator: Translator,
+  clock: Clock,
+  taskManager: TaskManager,
+};
+
+
 export default function Desktop() {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
@@ -114,10 +128,8 @@ export default function Desktop() {
     const app = APPS_CONFIG.find(a => a.id === appId);
     if (!app) return;
 
-    // Check if a window for this app is already open and not minimized
     const existingWindow = windows.find(w => w.appId === appId);
     if (existingWindow) {
-      // If it's minimized, unminimize it. Otherwise, just focus.
       setWindows(prev => prev.map(w => w.id === existingWindow.id ? { ...w, isMinimized: false, zIndex: nextZIndex } : w));
       setActiveWindowId(existingWindow.id);
       setNextZIndex(prev => prev + 1);
@@ -140,24 +152,6 @@ export default function Desktop() {
     setActiveWindowId(newWindow.id);
     setNextZIndex(prev => prev + 1);
   }, [windows, nextZIndex]);
-
-  const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
-    fileExplorer: FileExplorer,
-    settings: (props: any) => <Settings {...props} onSetWallpaper={handleSetWallpaper} />,
-    calculator: Calculator,
-    camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} openApp={openApp} />,
-    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} openApp={openApp} />,
-    youtube: YouTube,
-    notes: NotesApp,
-    translator: Translator,
-    clock: Clock,
-    taskManager: (props: any) => <TaskManager {...props} tasks={tasks} addTask={addTask} deleteTask={deleteTask} toggleTask={toggleTask} toggleStar={toggleStar} />,
-  }), [handleSetWallpaper, addPhotoToGallery, deletePhotoFromGallery, galleryPhotos, openApp, tasks, addTask, deleteTask, toggleTask, toggleStar]);
-  
-  const openAppConfig = useCallback((app: AppConfig) => {
-    openApp(app.id);
-  }, [openApp]);
-
 
   const closeWindow = useCallback((windowId: string) => {
     setWindows(prev => prev.filter(w => w.id !== windowId));
@@ -184,7 +178,7 @@ export default function Desktop() {
   
   const onResizeStart = useCallback((windowId: string, e: React.MouseEvent) => {
     focusWindow(windowId);
-e.stopPropagation();
+    e.stopPropagation();
     const window = windows.find(w => w.id === windowId);
     if (!window) return;
     resizeInfo.current = {
@@ -246,6 +240,28 @@ e.stopPropagation();
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
         {openWindows.map(win => {
           const AppComponent = appComponentMap[win.appId];
+          const appProps: { [key: string]: any } = {};
+
+          if (win.appId === 'settings') {
+            appProps.onSetWallpaper = handleSetWallpaper;
+          }
+          if (win.appId === 'camera') {
+            appProps.onCapture = addPhotoToGallery;
+            appProps.openApp = openApp;
+          }
+          if (win.appId === 'gallery') {
+            appProps.photos = galleryPhotos;
+            appProps.onDeletePhoto = deletePhotoFromGallery;
+            appProps.openApp = openApp;
+          }
+           if (win.appId === 'taskManager') {
+            appProps.tasks = tasks;
+            appProps.addTask = addTask;
+            appProps.deleteTask = deleteTask;
+            appProps.toggleTask = toggleTask;
+            appProps.toggleStar = toggleStar;
+          }
+
           return (
             <Window
               key={win.id}
@@ -257,12 +273,12 @@ e.stopPropagation();
               onDragStart={(e) => onDragStart(win.id, e)}
               onResizeStart={(e) => onResizeStart(win.id, e)}
             >
-              {AppComponent ? <AppComponent /> : <div>App not found</div>}
+              {AppComponent ? <AppComponent {...appProps} /> : <div>App not found</div>}
             </Window>
           );
         })}
       </div>
-      <Dock onAppClick={openAppConfig} openWindows={windows} onWindowClick={focusWindow} />
+      <Dock onAppClick={openApp} openWindows={windows} onWindowClick={focusWindow} />
     </div>
   );
 }
