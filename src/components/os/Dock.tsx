@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import type { WindowInstance } from './Desktop';
 
 interface DockProps {
-  onAppClick: (app: AppConfig) => void;
+  onAppClick: (appId: string) => void;
   openWindows: WindowInstance[];
   onWindowClick: (windowId: string) => void;
 }
@@ -24,7 +24,7 @@ export default function Dock({ onAppClick, openWindows, onWindowClick }: DockPro
               if (window) {
                 onWindowClick(window.id);
               } else {
-                onAppClick(app);
+                onAppClick(app.id);
               }
             };
 
