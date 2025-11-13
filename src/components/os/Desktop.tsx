@@ -9,6 +9,7 @@ import FileExplorer from '../apps/FileExplorer';
 import Settings from '../apps/Settings';
 import Calculator from '../apps/Calculator';
 import CameraApp from '../apps/Camera';
+import Gallery from '../apps/Gallery';
 
 export interface WindowInstance {
   id: string;
@@ -27,6 +28,7 @@ const appComponentMap: { [key: string]: React.ComponentType } = {
   settings: Settings,
   calculator: Calculator,
   camera: CameraApp,
+  gallery: Gallery,
 };
 
 export default function Desktop() {
