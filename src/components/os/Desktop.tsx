@@ -16,8 +16,11 @@ import NotesApp from '../apps/Notes';
 import Translator from '../apps/Translator';
 import Clock from '../apps/Clock';
 import TaskManager from '../apps/TaskManager';
+import TaskListWidget from './TaskListWidget';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { Task } from '@/lib/types';
+
 
 export interface WindowInstance {
   id: string;
@@ -36,6 +39,8 @@ export default function Desktop() {
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
   const [nextZIndex, setNextZIndex] = useState(10);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(initialGalleryPhotos);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
@@ -64,6 +69,33 @@ export default function Desktop() {
 
   const deletePhotoFromGallery = useCallback((photoId: string) => {
     setGalleryPhotos(prev => prev.filter(p => p.id !== photoId));
+  }, []);
+
+  // Task Management Logic
+  const addTask = useCallback((task: Omit<Task, 'id' | 'completed' | 'starred'>) => {
+    const newTask: Task = {
+      ...task,
+      id: Date.now(),
+      completed: false,
+      starred: false,
+    };
+    setTasks(prev => [newTask, ...prev]);
+  }, []);
+
+  const toggleTask = useCallback((id: number) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ));
+  }, []);
+
+  const deleteTask = useCallback((id: number) => {
+    setTasks(prev => prev.filter(task => task.id !== id));
+  }, []);
+
+  const toggleStar = useCallback((id: number) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id ? { ...task, starred: !task.starred } : task
+    ));
   }, []);
   
   const focusWindow = useCallback((windowId: string) => {
@@ -123,8 +155,8 @@ export default function Desktop() {
     notes: NotesApp,
     translator: Translator,
     clock: Clock,
-    taskManager: TaskManager,
-  }), [handleSetWallpaper, addPhotoToGallery, deletePhotoFromGallery, galleryPhotos, openApp]);
+    taskManager: (props: any) => <TaskManager {...props} tasks={tasks} addTask={addTask} deleteTask={deleteTask} toggleTask={toggleTask} toggleStar={toggleStar} />,
+  }), [handleSetWallpaper, addPhotoToGallery, deletePhotoFromGallery, galleryPhotos, openApp, tasks, addTask, deleteTask, toggleTask, toggleStar]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
@@ -215,6 +247,7 @@ e.stopPropagation();
       )}
       <TopBar />
       <div className="flex-grow relative">
+        <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
         {openWindows.map(win => {
           const AppComponent = appComponentMap[win.appId];
           return (

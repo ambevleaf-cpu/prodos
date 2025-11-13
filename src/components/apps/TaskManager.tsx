@@ -8,19 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { type Task } from '@/lib/types';
 
-interface Task {
-    id: number;
-    title: string;
-    completed: boolean;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    category: 'work' | 'personal' | 'shopping' | 'health' | 'learning' | 'other';
-    dueDate: string | null;
-    starred: boolean;
+interface TaskManagerProps {
+    tasks: Task[];
+    addTask: (task: Omit<Task, 'id' | 'completed' | 'starred'>) => void;
+    toggleTask: (id: number) => void;
+    deleteTask: (id: number) => void;
+    toggleStar: (id: number) => void;
 }
 
-export default function TaskManager() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+export default function TaskManager({ tasks, addTask: addTaskProp, toggleTask, deleteTask, toggleStar }: TaskManagerProps) {
   const [taskInput, setTaskInput] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   const [selectedCategory, setSelectedCategory] = useState<'work' | 'personal' | 'shopping' | 'health' | 'learning' | 'other'>('work');
@@ -44,38 +42,18 @@ export default function TaskManager() {
     { value: 'other', label: '📌 Other' }
   ] as const;
 
-  const addTask = () => {
+  const handleAddTask = () => {
     if (!taskInput.trim()) return;
 
-    const newTask: Task = {
-      id: Date.now(),
+    addTaskProp({
       title: taskInput,
-      completed: false,
       priority: selectedPriority,
       category: selectedCategory,
       dueDate: dueDate || null,
-      starred: false
-    };
+    });
 
-    setTasks(prev => [newTask, ...prev]);
     setTaskInput('');
     setDueDate('');
-  };
-
-  const toggleTask = (id: number) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
-  const deleteTask = (id: number) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-  };
-
-  const toggleStar = (id: number) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, starred: !task.starred } : task
-    ));
   };
 
   const getStats = () => {
@@ -133,11 +111,11 @@ export default function TaskManager() {
                 type="text"
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addTask()}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
                 placeholder="What needs to be done?"
                 className="flex-1 px-6 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 text-lg h-auto"
               />
-              <Button onClick={addTask} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg text-base h-auto">
+              <Button onClick={handleAddTask} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg text-base h-auto">
                 <Plus className="w-5 h-5" />Add
               </Button>
             </div>
