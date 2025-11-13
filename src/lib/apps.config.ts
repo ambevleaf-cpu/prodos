@@ -1,4 +1,4 @@
-import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, type LucideIcon } from 'lucide-react';
+import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, type LucideIcon } from 'lucide-react';
 
 export interface AppConfig {
   id: string;
@@ -41,6 +41,11 @@ export const APPS_CONFIG: AppConfig[] = [
     id: 'taskManager',
     title: 'Task Manager',
     icon: CheckSquare,
+  },
+  {
+    id: 'socialMedia',
+    title: 'Social Media',
+    icon: Users,
   },
   {
     id: 'settings',

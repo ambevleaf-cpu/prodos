@@ -15,6 +15,7 @@ import NotesApp from '../apps/Notes';
 import Translator from '../apps/Translator';
 import Clock from '../apps/Clock';
 import TaskManager from '../apps/TaskManager';
+import SocialMediaApp from '../apps/SocialMedia';
 import TaskListWidget from './TaskListWidget';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import type { Task } from '@/lib/types';
@@ -46,6 +47,7 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   translator: Translator,
   clock: Clock,
   taskManager: TaskManager,
+  socialMedia: SocialMediaApp,
 };
 
 
