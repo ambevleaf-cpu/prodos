@@ -1,9 +1,13 @@
 'use client';
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, User, Home, Search, Bell, Menu, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function SocialMediaApp() {
-  const [currentUser] = useState({
+  const [currentUser, setCurrentUser] = useState({
     id: 1,
     name: 'You',
     username: '@you',
@@ -91,6 +95,9 @@ export default function SocialMediaApp() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [followingUsers, setFollowingUsers] = useState([3, 6]);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editedName, setEditedName] = useState(currentUser.name);
+  const [editedUsername, setEditedUsername] = useState(currentUser.username);
 
   const handleLike = (postId: number) => {
     setPosts(posts.map(post => {
@@ -130,6 +137,16 @@ export default function SocialMediaApp() {
       setFollowingUsers([...followingUsers, userId]);
     }
   };
+  
+  const handleSaveProfile = () => {
+    setCurrentUser({
+        ...currentUser,
+        name: editedName,
+        username: editedUsername,
+    });
+    setShowEditProfile(false);
+  };
+
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -315,7 +332,7 @@ export default function SocialMediaApp() {
           
           <div className="flex gap-8 mt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">{posts.length + userPosts.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{posts.filter(p => p.user.id === currentUser.id).length + userPosts.length}</p>
               <p className="text-sm text-gray-500">Posts</p>
             </div>
             <div className="text-center">
@@ -328,7 +345,7 @@ export default function SocialMediaApp() {
             </div>
           </div>
 
-          <button className="mt-6 px-8 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
+          <button onClick={() => setShowEditProfile(true)} className="mt-6 px-8 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">
             Edit Profile
           </button>
         </div>
@@ -425,6 +442,28 @@ export default function SocialMediaApp() {
           </button>
         </div>
       </nav>
+      
+      <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" value={editedName} onChange={(e) => setEditedName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" value={editedUsername} onChange={(e) => setEditedUsername(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditProfile(false)}>Cancel</Button>
+            <Button onClick={handleSaveProfile}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
