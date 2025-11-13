@@ -20,16 +20,17 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi, Palette } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut } from "lucide-react";
 import { useState } from "react";
 import { galleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import NextImage from 'next/image';
 
 interface SettingsProps {
   onSetWallpaper?: (photo: { url: string; hint: string; description: string; }) => void;
+  onSignOut?: () => void;
 }
 
-export default function Settings({ onSetWallpaper }: SettingsProps) {
+export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   const { toast } = useToast();
   const [volume, setVolume] = useState([50]);
   const [wifi, setWifi] = useState(true);
@@ -161,6 +162,29 @@ export default function Settings({ onSetWallpaper }: SettingsProps) {
                 }}
               >
                 Check for Updates
+              </Button>
+            </div>
+          </div>
+          
+          <Separator />
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <UserCircle className="w-5 h-5" /> Account
+            </h3>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label>Session</Label>
+                <p className="text-sm text-muted-foreground">
+                  End your current session and sign out.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={onSignOut}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>

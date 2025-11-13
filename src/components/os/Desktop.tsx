@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import TopBar from './TopBar';
 import Dock from './Dock';
 import Window from './Window';
@@ -19,6 +19,8 @@ import TaskListWidget from './TaskListWidget';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import type { Task } from '@/lib/types';
 import AnimatedWallpaper from './AnimatedWallpaper';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 
 export interface WindowInstance {
@@ -58,6 +60,13 @@ export default function Desktop() {
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+  const auth = useAuth();
+
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    // The useUser hook in the Home page will detect the change and redirect to login.
+  };
 
   const handleSetWallpaper = useCallback((photo: { url: string, hint: string, description: string }) => {
     // For now, setting a wallpaper from gallery will disable the animated one.
@@ -210,7 +219,7 @@ export default function Desktop() {
     resizeInfo.current = null;
   }, []);
 
-  const openWindows = useMemo(() => windows.filter(w => !w.isMinimized), [windows]);
+  const openWindows = windows.filter(w => !w.isMinimized);
 
   return (
     <div
@@ -233,6 +242,7 @@ export default function Desktop() {
 
           if (win.appId === 'settings') {
             appProps.onSetWallpaper = handleSetWallpaper;
+            appProps.onSignOut = handleSignOut;
           }
           if (win.appId === 'camera') {
             appProps.onCapture = addPhotoToGallery;
