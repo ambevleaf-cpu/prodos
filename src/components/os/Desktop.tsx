@@ -7,6 +7,7 @@ import Window from './Window';
 import { APPS_CONFIG, AppConfig } from '@/lib/apps.config';
 import FileExplorer from '../apps/FileExplorer';
 import Settings from '../apps/Settings';
+import Calculator from '../apps/Calculator';
 
 export interface WindowInstance {
   id: string;
@@ -23,6 +24,7 @@ export interface WindowInstance {
 const appComponentMap: { [key: string]: React.ComponentType } = {
   fileExplorer: FileExplorer,
   settings: Settings,
+  calculator: Calculator,
 };
 
 export default function Desktop() {
@@ -54,8 +56,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: 800,
-      height: 500,
+      width: app.id === 'calculator' ? 350 : 800,
+      height: app.id === 'calculator' ? 450 : 500,
       zIndex: nextZIndex,
       isMinimized: false,
     };

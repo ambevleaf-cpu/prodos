@@ -1,4 +1,4 @@
-import { FolderOpen, Settings2, type LucideIcon } from 'lucide-react';
+import { FolderOpen, Settings2, Calculator, type LucideIcon } from 'lucide-react';
 
 export interface AppConfig {
   id: string;
@@ -17,4 +17,9 @@ export const APPS_CONFIG: AppConfig[] = [
     title: 'Settings',
     icon: Settings2,
   },
+  {
+    id: 'calculator',
+    title: 'Calculator',
+    icon: Calculator,
+  }
 ];
