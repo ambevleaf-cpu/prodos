@@ -63,7 +63,7 @@ export default function SocialMediaApp() {
     { id: 5, type: 'comment', user: 'Lisa Wang', avatar: '👩‍🎤', content: 'commented on your post', time: '5h ago', read: true },
   ]);
 
-  const [userPosts] = useState([
+  const [userPosts, setUserPosts] = useState([
     {
       id: 101,
       content: 'Working on something exciting! 🎉',
@@ -125,6 +125,7 @@ export default function SocialMediaApp() {
         liked: false
       };
       setPosts([post, ...posts]);
+      setUserPosts(prevUserPosts => [post, ...prevUserPosts]);
       setNewPost('');
       setShowNewPost(false);
     }
@@ -332,7 +333,7 @@ export default function SocialMediaApp() {
           
           <div className="flex gap-8 mt-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">{posts.filter(p => p.user.id === currentUser.id).length + userPosts.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{userPosts.length}</p>
               <p className="text-sm text-gray-500">Posts</p>
             </div>
             <div className="text-center">
