@@ -34,6 +34,7 @@ export default function ClockApp() {
   }, []);
 
   const playSound = () => {
+    if (typeof window.AudioContext === 'undefined') return;
     if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext)();
     }
@@ -209,105 +210,282 @@ export default function ClockApp() {
     switch (activeTab) {
       case 'clock':
         return (
-          <div className="text-center p-4 md:p-8">
-            <div className="text-5xl md:text-7xl font-bold text-foreground mb-2">
-              {formatTime(currentTime)}
-            </div>
-            <div className="text-lg md:text-xl text-muted-foreground">
-              {formatDate(currentTime)}
+          <div className="bg-white rounded-3xl shadow-xl p-12">
+            <div className="text-center">
+              <div className="text-8xl font-bold text-gray-800 mb-4">
+                {formatTime(currentTime)}
+              </div>
+              <div className="text-2xl text-gray-600 mb-8">
+                {formatDate(currentTime)}
+              </div>
+              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                <div className="p-4 bg-blue-50 rounded-xl">
+                  <div className="text-sm text-gray-600">Hour</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentTime.getHours().toString().padStart(2, '0')}
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-xl">
+                  <div className="text-sm text-gray-600">Minute</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {currentTime.getMinutes().toString().padStart(2, '0')}
+                  </div>
+                </div>
+                <div className="p-4 bg-pink-50 rounded-xl">
+                  <div className="text-sm text-gray-600">Second</div>
+                  <div className="text-2xl font-bold text-pink-600">
+                    {currentTime.getSeconds().toString().padStart(2, '0')}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
       case 'alarm':
         return (
-          <div className="p-4 space-y-4">
-            <Button onClick={addAlarm} className="w-full">Add Alarm</Button>
-            {alarms.map(alarm => (
-              <div key={alarm.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <Input type="time" value={alarm.time} onChange={e => setAlarms(alarms.map(a => a.id === alarm.id ? {...a, time: e.target.value} : a))} className="text-xl font-bold bg-transparent border-none p-1"/>
-                  <Input type="text" placeholder="Label" value={alarm.label} onChange={e => setAlarms(alarms.map(a => a.id === alarm.id ? {...a, label: e.target.value} : a))} className="bg-transparent border-none p-1" />
+          <div className="bg-white rounded-3xl shadow-xl p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Your Alarms</h2>
+              <button
+                onClick={addAlarm}
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
+              >
+                + Add Alarm
+              </button>
+            </div>
+            <div className="space-y-4">
+              {alarms.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <AlarmClock className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>No alarms set. Add one to get started!</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={alarm.enabled} onCheckedChange={() => toggleAlarm(alarm.id)} />
-                  <Button variant="destructive" size="sm" onClick={() => deleteAlarm(alarm.id)}>Delete</Button>
-                </div>
-              </div>
-            ))}
+              ) : (
+                alarms.map(alarm => (
+                  <div
+                    key={alarm.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="time"
+                        value={alarm.time}
+                        onChange={(e) => {
+                          setAlarms(alarms.map(a => 
+                            a.id === alarm.id ? { ...a, time: e.target.value } : a
+                          ));
+                        }}
+                        className="text-3xl font-bold text-gray-800 bg-transparent border-none outline-none p-0 h-auto"
+                      />
+                      <Input
+                        type="text"
+                        value={alarm.label}
+                        onChange={(e) => {
+                          setAlarms(alarms.map(a => 
+                            a.id === alarm.id ? { ...a, label: e.target.value } : a
+                          ));
+                        }}
+                        className="text-lg text-gray-600 bg-transparent border-b border-gray-300 outline-none p-0 h-auto"
+                        placeholder="Label"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Switch checked={alarm.enabled} onCheckedChange={() => toggleAlarm(alarm.id)} />
+                      <Button
+                        onClick={() => deleteAlarm(alarm.id)}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         );
       case 'timer':
         return (
-          <div className="text-center p-4">
-            <div className="text-6xl font-mono font-bold my-4">
-              {timerActive || timerTimeLeft > 0 ? formatTimerDisplay(timerTimeLeft) : 'Set Timer'}
-            </div>
-            {(!timerActive && timerTimeLeft === 0) && (
-              <div className="flex justify-center gap-2 mb-4">
-                <Input type="number" value={timerHours} onChange={e => setTimerHours(Number(e.target.value))} className="w-20 text-center" placeholder="HH" />
-                <Input type="number" value={timerMinutes} onChange={e => setTimerMinutes(Number(e.target.value))} className="w-20 text-center" placeholder="MM" />
-                <Input type="number" value={timerSeconds} onChange={e => setTimerSeconds(Number(e.target.value))} className="w-20 text-center" placeholder="SS" />
+          <div className="bg-white rounded-3xl shadow-xl p-12">
+            <div className="text-center">
+              <div className="text-7xl font-bold text-gray-800 mb-8">
+                {timerActive || timerTimeLeft > 0 ? formatTimerDisplay(timerTimeLeft) : `${timerHours.toString().padStart(2, '0')}:${timerMinutes.toString().padStart(2, '0')}:${timerSeconds.toString().padStart(2, '0')}`}
               </div>
-            )}
-            <div className="flex justify-center gap-2">
-              {timerActive ? (
-                <Button onClick={() => setTimerActive(false)}>Pause</Button>
-              ) : (
-                <Button onClick={timerTimeLeft > 0 ? () => setTimerActive(true) : startTimer}>
-                  {timerTimeLeft > 0 ? 'Resume' : 'Start'}
-                </Button>
+              {(!timerActive && timerTimeLeft === 0) && (
+                <div className="flex gap-4 justify-center mb-8">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Hours</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={timerHours}
+                      onChange={(e) => setTimerHours(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)))}
+                      className="w-24 px-4 py-3 text-2xl font-bold text-center border-2 border-gray-300 rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Minutes</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={timerMinutes}
+                      onChange={(e) => setTimerMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      className="w-24 px-4 py-3 text-2xl font-bold text-center border-2 border-gray-300 rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Seconds</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={timerSeconds}
+                      onChange={(e) => setTimerSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      className="w-24 px-4 py-3 text-2xl font-bold text-center border-2 border-gray-300 rounded-xl"
+                    />
+                  </div>
+                </div>
               )}
-              <Button variant="secondary" onClick={resetTimer}>Reset</Button>
+              <div className="flex gap-4 justify-center">
+                {timerActive ? (
+                  <button onClick={() => setTimerActive(false)} className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg">Pause</button>
+                ) : (
+                  <button onClick={timerTimeLeft > 0 ? () => setTimerActive(true) : startTimer} className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg">
+                    {timerTimeLeft > 0 ? 'Resume' : 'Start'}
+                  </button>
+                )}
+                <button
+                  onClick={resetTimer}
+                  className="px-8 py-4 bg-gray-600 text-white rounded-xl font-semibold text-lg hover:bg-gray-700 transition-all shadow-lg"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         );
       case 'stopwatch':
         return (
-          <div className="text-center p-4">
-            <div className="text-6xl font-mono font-bold my-8">
-              {formatStopwatch(stopwatchTime)}
-            </div>
-            <div className="flex justify-center gap-2">
-              <Button onClick={toggleStopwatch}>{stopwatchActive ? 'Stop' : 'Start'}</Button>
-              <Button variant="secondary" onClick={resetStopwatch}>Reset</Button>
+          <div className="bg-white rounded-3xl shadow-xl p-12">
+            <div className="text-center">
+              <div className="text-7xl font-bold text-gray-800 mb-8">
+                {formatStopwatch(stopwatchTime)}
+              </div>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={toggleStopwatch}
+                  className="px-8 py-4 bg-green-600 text-white rounded-xl font-semibold text-lg hover:bg-green-700 transition-all shadow-lg"
+                >
+                  {stopwatchActive ? 'Stop' : 'Start'}
+                </button>
+                <button
+                  onClick={resetStopwatch}
+                  className="px-8 py-4 bg-gray-600 text-white rounded-xl font-semibold text-lg hover:bg-gray-700 transition-all shadow-lg"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         );
       case 'world':
         return (
-          <div className="p-4 space-y-3">
-            {worldClocks.map(clock => (
-              <div key={clock.city} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                <span className="font-semibold">{clock.city}</span>
-                <span className="font-mono text-lg">{getTimeInTimezone(clock.timezone)}</span>
-              </div>
-            ))}
+           <div className="bg-white rounded-3xl shadow-xl p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">World Clocks</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {worldClocks.map((clock, index) => {
+                const time = new Date().toLocaleTimeString('en-US', {
+                  timeZone: clock.timezone,
+                  hour12: false
+                });
+                const [hours, minutes, seconds] = time.split(':');
+                const date = new Date().toLocaleDateString('en-US', {
+                  timeZone: clock.timezone,
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric'
+                });
+                const period = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                const hour12 = parseInt(hours) % 12 || 12;
+                
+                return (
+                  <div
+                    key={index}
+                    className="p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl shadow-lg border border-indigo-100"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <div className="text-2xl font-bold text-gray-800 mb-1">
+                          {clock.city}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {date}
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <Globe className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-5xl font-bold text-indigo-600">
+                        {hour12.toString().padStart(2, '0')}:{minutes}
+                      </div>
+                      <div className="text-2xl font-semibold text-indigo-400">
+                        :{seconds}
+                      </div>
+                      <div className="text-xl font-bold text-gray-600 ml-2">
+                        {period}
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-indigo-100">
+                      <div className="text-xs text-gray-500">
+                        Timezone: {clock.timezone}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
     }
   };
 
+  const tabs = [
+    {id: 'clock', icon: Clock},
+    {id: 'alarm', icon: AlarmClock},
+    {id: 'timer', icon: Timer},
+    {id: 'stopwatch', icon: Watch},
+    {id: 'world', icon: Globe}
+  ];
+
   return (
-    <Card className="w-full h-full flex flex-col border-none shadow-none rounded-none bg-background">
-      <CardContent className="p-0 flex-grow flex flex-col">
-        <div className="flex border-b">
-            {[
-                {id: 'clock', icon: Clock},
-                {id: 'alarm', icon: AlarmClock},
-                {id: 'timer', icon: Timer},
-                {id: 'stopwatch', icon: Watch},
-                {id: 'world', icon: Globe}
-            ].map(tab => (
-                <Button key={tab.id} variant="ghost" onClick={() => setActiveTab(tab.id)} className={`flex-1 rounded-none capitalize ${activeTab === tab.id ? 'bg-muted font-bold' : ''}`}>
-                    <tab.icon className="w-5 h-5 mr-2" />
-                    {tab.id}
-                </Button>
-            ))}
-        </div>
-        <div className="flex-grow overflow-auto">
-          {renderContent()}
-        </div>
-      </CardContent>
+    <Card className="w-full h-full flex flex-col border-none shadow-none rounded-none bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <CardContent className="p-4 flex-grow flex flex-col gap-4">
+            <div className="bg-white rounded-2xl shadow-lg p-2">
+                <div className="flex gap-2">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                            activeTab === tab.id
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            <tab.icon className="w-5 h-5" />
+                            <span className="hidden md:inline">{tab.id.charAt(0).toUpperCase() + tab.id.slice(1)}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="flex-grow overflow-auto rounded-3xl">
+              {renderContent()}
+            </div>
+        </CardContent>
     </Card>
   );
 }
