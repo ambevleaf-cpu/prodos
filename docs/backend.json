@@ -1,0 +1,444 @@
+{
+  "entities": {
+    "ApplicationWindow": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ApplicationWindow",
+      "type": "object",
+      "description": "Represents an application window in the virtual desktop environment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ApplicationWindow entity."
+        },
+        "applicationId": {
+          "type": "string",
+          "description": "Reference to the Application that owns this window. (Relationship: Application 1:N ApplicationWindow)"
+        },
+        "x": {
+          "type": "number",
+          "description": "The x-coordinate of the window's position on the virtual desktop."
+        },
+        "y": {
+          "type": "number",
+          "description": "The y-coordinate of the window's position on the virtual desktop."
+        },
+        "width": {
+          "type": "number",
+          "description": "The width of the window."
+        },
+        "height": {
+          "type": "number",
+          "description": "The height of the window."
+        },
+        "isMinimized": {
+          "type": "boolean",
+          "description": "Indicates whether the window is minimized."
+        },
+        "isMaximized": {
+          "type": "boolean",
+          "description": "Indicates whether the window is maximized."
+        },
+        "zIndex": {
+          "type": "number",
+          "description": "The z-index of the window, determining its stacking order."
+        }
+      },
+      "required": [
+        "id",
+        "applicationId",
+        "x",
+        "y",
+        "width",
+        "height",
+        "isMinimized",
+        "isMaximized",
+        "zIndex"
+      ]
+    },
+    "Application": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Application",
+      "type": "object",
+      "description": "Represents an installed application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Application entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the application."
+        },
+        "executablePath": {
+          "type": "string",
+          "description": "The path to the application's executable file."
+        },
+        "iconPath": {
+          "type": "string",
+          "description": "The path to the application's icon file."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the application."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "executablePath",
+        "iconPath",
+        "description"
+      ]
+    },
+    "File": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "File",
+      "type": "object",
+      "description": "Represents a file in the file system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the File entity."
+        },
+        "directoryId": {
+          "type": "string",
+          "description": "Reference to the Directory containing this file. (Relationship: Directory 1:N File)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the file."
+        },
+        "extension": {
+          "type": "string",
+          "description": "The file extension."
+        },
+        "size": {
+          "type": "number",
+          "description": "The size of the file in bytes."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the file was created.",
+          "format": "date-time"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "description": "The date and time the file was last modified.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "directoryId",
+        "name",
+        "extension",
+        "size",
+        "createdAt",
+        "modifiedAt"
+      ]
+    },
+    "Directory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Directory",
+      "type": "object",
+      "description": "Represents a directory in the file system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Directory entity."
+        },
+        "parentDirectoryId": {
+          "type": "string",
+          "description": "Reference to the parent Directory. Null if it's the root directory. (Relationship: Directory 1:N Directory (Self-Referential))",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the directory."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the directory was created.",
+          "format": "date-time"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "description": "The date and time the directory was last modified.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "createdAt",
+        "modifiedAt"
+      ]
+    },
+    "Setting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Setting",
+      "type": "object",
+      "description": "Represents a system setting.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Setting entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the setting."
+        },
+        "value": {
+          "type": "string",
+          "description": "The value of the setting."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the setting."
+        },
+        "type": {
+          "type": "string",
+          "description": "The data type of the setting value (e.g., string, number, boolean)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "value",
+        "description",
+        "type"
+      ]
+    },
+    "SearchQuery": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SearchQuery",
+      "type": "object",
+      "description": "Represents a search query performed by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SearchQuery entity."
+        },
+        "queryText": {
+          "type": "string",
+          "description": "The text of the search query."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the search query was performed.",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "string",
+          "description": "JSON string containing the search results from Google."
+        }
+      },
+      "required": [
+        "id",
+        "queryText",
+        "timestamp",
+        "results"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a system notification.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "applicationId": {
+          "type": "string",
+          "description": "Reference to the Application that generated the notification. (Relationship: Application 1:N Notification)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the notification."
+        },
+        "message": {
+          "type": "string",
+          "description": "The message body of the notification."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the notification was generated.",
+          "format": "date-time"
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Indicates whether the notification has been read."
+        }
+      },
+      "required": [
+        "id",
+        "applicationId",
+        "title",
+        "message",
+        "timestamp",
+        "isRead"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/applications/{applicationId}",
+        "definition": {
+          "entityName": "Application",
+          "schema": {
+            "$ref": "#/backend/entities/Application"
+          },
+          "description": "Stores applications installed or available to a specific user. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the application."
+            },
+            {
+              "name": "applicationId",
+              "description": "The ID of the application."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/applications/{applicationId}/applicationWindows/{applicationWindowId}",
+        "definition": {
+          "entityName": "ApplicationWindow",
+          "schema": {
+            "$ref": "#/backend/entities/ApplicationWindow"
+          },
+          "description": "Stores application windows for a specific application owned by a user. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the application."
+            },
+            {
+              "name": "applicationId",
+              "description": "The ID of the application."
+            },
+            {
+              "name": "applicationWindowId",
+              "description": "The ID of the application window."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/directories/{directoryId}",
+        "definition": {
+          "entityName": "Directory",
+          "schema": {
+            "$ref": "#/backend/entities/Directory"
+          },
+          "description": "Stores directories for a specific user's virtual file system. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the directory."
+            },
+            {
+              "name": "directoryId",
+              "description": "The ID of the directory."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/directories/{directoryId}/files/{fileId}",
+        "definition": {
+          "entityName": "File",
+          "schema": {
+            "$ref": "#/backend/entities/File"
+          },
+          "description": "Stores files within a specific directory in a user's virtual file system. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the file."
+            },
+            {
+              "name": "directoryId",
+              "description": "The ID of the directory containing the file."
+            },
+            {
+              "name": "fileId",
+              "description": "The ID of the file."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/settings/{settingId}",
+        "definition": {
+          "entityName": "Setting",
+          "schema": {
+            "$ref": "#/backend/entities/Setting"
+          },
+          "description": "Stores settings specific to a user. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the setting."
+            },
+            {
+              "name": "settingId",
+              "description": "The ID of the setting."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/searchQueries/{searchQueryId}",
+        "definition": {
+          "entityName": "SearchQuery",
+          "schema": {
+            "$ref": "#/backend/entities/SearchQuery"
+          },
+          "description": "Stores search queries performed by a specific user. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who performed the search query."
+            },
+            {
+              "name": "searchQueryId",
+              "description": "The ID of the search query."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notifications for a specific user. Uses path-based ownership: only the user with ID `userId` can access this data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the notification."
+            },
+            {
+              "name": "notificationId",
+              "description": "The ID of the notification."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to follow best practices for security, scalability, and debuggability, focusing on Authorization Independence and clear data ownership.  The core strategy is to leverage path-based ownership for user-specific data and to avoid `get()` calls in security rules by denormalizing authorization context when needed.\n\n*   **Users Collection:** No user data is stored outside of Firebase Authentication. User identity (UID) from `request.auth.uid` is used as the anchor for all user-owned data.\n*   **Hierarchical Data:** The structure reflects the relationships between entities.  For example, `ApplicationWindows` are stored as subcollections of `Applications` which are under `users`. Similarly, `Files` are stored as subcollections under `Directories`, forming a filesystem-like hierarchy.\n*   **Authorization Independence:** Path-based ownership (`/users/{userId}/...`) inherently provides authorization independence. Security rules can easily validate `request.auth.uid == userId` without needing to read any data. No denormalization is needed here.\n*   **QAPs:** Path-based ownership ensures secure `list` operations. Rules can limit list access to the currently authenticated user's data. The principle of Structural Segregation (Homogeneous Security Posture) also supports QAPs by ensuring that each collection has clear and consistent security needs.\n"
+  }
+}
