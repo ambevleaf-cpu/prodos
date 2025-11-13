@@ -44,13 +44,17 @@ export default function Desktop() {
     setGalleryPhotos(prev => [newPhoto, ...prev]);
   }, []);
 
+  const deletePhotoFromGallery = useCallback((photoId: string) => {
+    setGalleryPhotos(prev => prev.filter(p => p.id !== photoId));
+  }, []);
+
   const appComponentMap: { [key: string]: React.ComponentType<any> } = useMemo(() => ({
     fileExplorer: FileExplorer,
     settings: Settings,
     calculator: Calculator,
     camera: (props: any) => <CameraApp {...props} onCapture={addPhotoToGallery} />,
-    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} />,
-  }), [addPhotoToGallery, galleryPhotos]);
+    gallery: (props: any) => <Gallery {...props} photos={galleryPhotos} onDeletePhoto={deletePhotoFromGallery} />,
+  }), [addPhotoToGallery, galleryPhotos, deletePhotoFromGallery]);
 
   const openApp = useCallback((appId: string) => {
     const app = APPS_CONFIG.find(a => a.id === appId);

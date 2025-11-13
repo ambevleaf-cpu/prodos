@@ -10,9 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 interface GalleryProps {
   openApp?: (appId: string) => void;
   photos: GalleryPhoto[];
+  onDeletePhoto: (photoId: string) => void;
 }
 
-export default function Gallery({ openApp, photos }: GalleryProps) {
+export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps) {
   const { toast } = useToast();
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [favorites, setFavorites] = useState<string[]>(['2', '5']);
@@ -50,6 +51,16 @@ export default function Gallery({ openApp, photos }: GalleryProps) {
         description: "Could not copy the link to your clipboard.",
       });
     }
+  };
+
+  const handleDelete = () => {
+    if (!selectedPhoto) return;
+    onDeletePhoto(selectedPhoto.id);
+    setSelectedPhoto(null);
+    toast({
+      title: "Photo Deleted",
+      description: "The photo has been removed from your gallery.",
+    });
   };
 
   const filteredPhotos = photos.filter(p => {
@@ -118,7 +129,7 @@ export default function Gallery({ openApp, photos }: GalleryProps) {
                 <button className="p-5 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors">
                   <Download size={28} />
                 </button>
-                <button className="p-5 rounded-full text-white bg-red-600/80 backdrop-blur-xl hover:bg-red-500 transition-colors">
+                <button onClick={handleDelete} className="p-5 rounded-full text-white bg-red-600/80 backdrop-blur-xl hover:bg-red-500 transition-colors">
                   <Trash2 size={28} />
                 </button>
               </div>
