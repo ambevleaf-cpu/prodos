@@ -15,6 +15,7 @@ import YouTube from '../apps/YouTube';
 import NotesApp from '../apps/Notes';
 import Translator from '../apps/Translator';
 import Clock from '../apps/Clock';
+import TaskManager from '../apps/TaskManager';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -101,8 +102,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: app.id === 'calculator' ? 450 : (app.id === 'clock' ? 900 : 800),
-      height: app.id === 'clock' ? 700 : 600,
+      width: app.id === 'calculator' ? 450 : (app.id === 'clock' || app.id === 'taskManager' ? 900 : 800),
+      height: app.id === 'clock' || app.id === 'taskManager' ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
     };
@@ -122,7 +123,8 @@ export default function Desktop() {
     notes: NotesApp,
     translator: Translator,
     clock: Clock,
-  }), [handleSetWallpaper, addPhotoToGallery, openApp, galleryPhotos, deletePhotoFromGallery]);
+    taskManager: TaskManager,
+  }), [handleSetWallpaper, addPhotoToGallery, deletePhotoFromGallery, galleryPhotos, openApp]);
   
   const openAppConfig = useCallback((app: AppConfig) => {
     openApp(app.id);
@@ -154,7 +156,7 @@ export default function Desktop() {
   
   const onResizeStart = useCallback((windowId: string, e: React.MouseEvent) => {
     focusWindow(windowId);
-    e.stopPropagation();
+e.stopPropagation();
     const window = windows.find(w => w.id === windowId);
     if (!window) return;
     resizeInfo.current = {
