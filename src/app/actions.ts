@@ -3,7 +3,8 @@
 import { naturalLanguageSearch, type NaturalLanguageSearchOutput } from '@/ai/flows/natural-language-search';
 import { type TranslateTextInput, type TranslateTextOutput } from '@/ai/flows/translator-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
-import { type TextToSpeechInput, type TextToSpeechOutput } from './schema';
+import { chatWithNexbro } from '@/ai/flows/nexbro-flow';
+import { type TextToSpeechInput, type TextToSpeechOutput, type ChatWithNexbroInput, type ChatWithNexbroOutput } from './schema';
 
 const dictionary = {
   'hello': 'नमस्ते',
@@ -89,5 +90,22 @@ export async function handleTextToSpeech(input: TextToSpeechInput): Promise<{
     } catch (error) {
         console.error(error);
         return { result: null, error: 'An error occurred during speech generation.' };
+    }
+}
+
+export async function handleNexbroChat(input: ChatWithNexbroInput): Promise<{
+  result: ChatWithNexbroOutput | null;
+  error: string | null;
+}> {
+    if (!input.message) {
+        return { result: null, error: 'Please enter a message.' };
+    }
+    
+    try {
+        const result = await chatWithNexbro(input);
+        return { result, error: null };
+    } catch (error) {
+        console.error('Nexbro Chat Error:', error);
+        return { result: null, error: 'Arre bhai, thoda technical issue aa gaya! Dubara try kar 😅' };
     }
 }
