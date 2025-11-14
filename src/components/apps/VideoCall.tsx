@@ -13,7 +13,6 @@ import {
   query,
   where,
   serverTimestamp,
-  deleteDoc,
   getDocs,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -73,7 +72,9 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         localVideoRef.current.srcObject = stream;
       }
       setLocalStream(stream);
-      setRemoteStream(new MediaStream()); // Initialize remote stream early
+      if (!remoteStream) {
+        setRemoteStream(new MediaStream());
+      }
       return stream;
     } catch (error) {
       console.error("Error accessing media devices.", error);
@@ -84,7 +85,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
       });
       return null;
     }
-  }, [toast]);
+  }, [toast, remoteStream]);
   
   useEffect(() => {
     if (localStream && localVideoRef.current) {
@@ -98,9 +99,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
   const hangUp = useCallback(async () => {
     if (pc.current) {
-      pc.current.getTransceivers().forEach(transceiver => {
-        transceiver.stop();
-      });
       pc.current.close();
       pc.current = null;
     }
@@ -119,7 +117,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
     if (callId && firestore) {
       const callDocRef = doc(firestore, 'calls', callId);
-      getDoc(callDocRef).then(callSnapshot => {
+      const callSnapshot = await getDoc(callDocRef);
         if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
             const updatePayload = { status: 'ended' };
             updateDoc(callDocRef, updatePayload).catch(err => {
@@ -130,31 +128,31 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
               }));
             });
         }
-      });
       
-      // Clean up old ended calls
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const q = query(collection(firestore, 'calls'), where('status', '==', 'ended'), where('createdAt', '<', fiveMinutesAgo));
-      getDocs(q).then(oldCalls => {
-        if (!oldCalls.empty) {
-          const batch = writeBatch(firestore);
-          oldCalls.forEach(doc => {
-              batch.delete(doc.ref);
-          });
-          batch.commit().catch(err => {
-              errorEmitter.emit('permission-error', new FirestorePermissionError({
-                  path: 'calls',
-                  operation: 'delete',
-                  requestResourceData: { note: `Batch delete of ${oldCalls.size} old call documents.` }
-              }));
-          });
-        }
-      }).catch(err => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: `calls`,
-          operation: 'list',
-        }));
+      
+      const oldCalls = await getDocs(q).catch(err => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: 'calls',
+              operation: 'list',
+          }));
+          return null;
       });
+
+      if (oldCalls && !oldCalls.empty) {
+        const batch = writeBatch(firestore);
+        oldCalls.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        batch.commit().catch(err => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: 'calls',
+                operation: 'delete',
+                requestResourceData: { note: `Batch delete of ${oldCalls.size} old call documents.` }
+            }));
+        });
+      }
     }
     
     setCallDetails({ callId: null, isCallActive: false });
@@ -261,19 +259,20 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     if (!isCallActive || !callId || !currentUser || !firestore || pc.current) return;
 
     const answerCall = async () => {
+        const callDocRef = doc(firestore, 'calls', callId);
+        const callSnapshot = await getDoc(callDocRef);
+        
+        // **Guard**: Only proceed if this user is the callee and the call is ringing
+        if (!callSnapshot.exists() || callSnapshot.data().calleeId !== currentUser.uid || callSnapshot.data().status !== 'ringing') {
+            return;
+        }
+        
         const stream = await setupStreams();
         if (!stream) {
             hangUp();
             return;
         };
-
-        const callDocRef = doc(firestore, 'calls', callId);
         
-        const callSnapshot = await getDoc(callDocRef);
-        if (!callSnapshot.exists() || callSnapshot.data().calleeId !== currentUser.uid) {
-            return; // Not the callee or call doesn't exist.
-        }
-
         pc.current = new RTCPeerConnection(servers);
 
         stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
