@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info } from "lucide-react";
 import { useState } from "react";
 import { galleryPhotos } from '@/lib/gallery-data';
 import NextImage from 'next/image';
@@ -38,13 +38,21 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   const [volume, setVolume] = useState([50]);
   const [wifi, setWifi] = useState(true);
 
+  const features = [
+    { icon: Wind, title: "Multitasking UI", description: "Manage multiple apps seamlessly in a familiar desktop environment with draggable and resizable windows." },
+    { icon: Bot, title: "AI-Powered Features", description: "Experience the future with an integrated AI chatbot (Nexbro) and natural language search capabilities." },
+    { icon: Users, title: "Real-Time Collaboration", description: "Connect with others through built-in social media and WebRTC-powered video calling." },
+    { icon: Sparkles, title: "Rich Application Suite", description: "Explore a variety of built-in apps, including a gallery, task manager, games, and media tools." },
+    { icon: Code, title: "Modern Tech Stack", description: "Built with Next.js, Firebase, Genkit, and Tailwind CSS for a high-performance, scalable experience." },
+  ];
+
   return (
-    <div className="h-full overflow-y-auto bg-background p-4">
+    <div className="h-full overflow-y-auto bg-slate-50 p-4">
       <Card className="border-none shadow-none bg-transparent">
         <CardHeader>
           <CardTitle>Settings</CardTitle>
           <CardDescription>
-            Manage your system preferences.
+            Manage your system preferences and learn about Prod OS.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -52,7 +60,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <UserCircle className="w-5 h-5" /> Account
             </h3>
-            <div className="rounded-lg border p-4 flex items-center gap-4">
+            <div className="rounded-lg border bg-background p-4 flex items-center gap-4">
                 <Avatar className="h-16 w-16">
                     <AvatarImage src={user?.photoURL ?? undefined} alt={user?.displayName ?? 'User'} />
                     <AvatarFallback>
@@ -79,7 +87,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Palette className="w-5 h-5" /> Personalization
             </h3>
-            <div className="rounded-lg border p-4">
+            <div className="rounded-lg border bg-background p-4">
               <div className="space-y-0.5 mb-4">
                 <Label htmlFor="wallpaper">Wallpaper</Label>
                 <p className="text-sm text-muted-foreground">
@@ -112,7 +120,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Monitor className="w-5 h-5" /> Display
             </h3>
-            <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center justify-between rounded-lg border bg-background p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="resolution">Resolution</Label>
                 <p className="text-sm text-muted-foreground">
@@ -138,7 +146,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Volume2 className="w-5 h-5" /> Sound
             </h3>
-            <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center justify-between rounded-lg border bg-background p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="volume">Master Volume</Label>
                 <p className="text-sm text-muted-foreground">
@@ -158,7 +166,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Wifi className="w-5 h-5" /> Network
             </h3>
-             <div className="flex items-center justify-between rounded-lg border p-4">
+             <div className="flex items-center justify-between rounded-lg border bg-background p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="wifi-switch">Wi-Fi</Label>
                 <p className="text-sm text-muted-foreground">
@@ -175,7 +183,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <BellRing className="w-5 h-5" /> Notifications
             </h3>
-            <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center justify-between rounded-lg border bg-background p-4">
               <div className="space-y-0.5">
                 <Label>System Updates</Label>
                 <p className="text-sm text-muted-foreground">
@@ -195,6 +203,75 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
               </Button>
             </div>
           </div>
+          
+          <Separator />
+            
+            <div className="space-y-6">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Info className="w-5 h-5" /> About Prod OS
+                </h3>
+                <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-white shadow-2xl rounded-2xl" style={{ background: 'linear-gradient(145deg, #1e293b, #0f172a)' }}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="inline-block mx-auto mb-4 p-3 rounded-full" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                       <Cpu size={32} />
+                    </div>
+                    <CardTitle className="text-4xl font-bold">Prod OS</CardTitle>
+                    <CardDescription className="text-white/70 text-lg">A Concept OS for the Modern Web</CardDescription>
+                  </CardHeader>
+                  <CardContent className="px-8 pb-8">
+                    <p className="text-center text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
+                      Prod OS is a conceptual operating system built entirely with Next.js, Firebase, and cutting-edge AI. 
+                      It explores the future of user interfaces, multitasking, and human-computer interaction in a web-native environment.
+                    </p>
+
+                    <div className="mb-12">
+                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Core Features</h4>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {features.map((feature, index) => (
+                                <div key={index} className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                                    <feature.icon className="w-8 h-8 mb-4 text-purple-400"/>
+                                    <h5 className="text-lg font-bold mb-2">{feature.title}</h5>
+                                    <p className="text-sm text-white/70">{feature.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center p-8 rounded-2xl mb-10" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <div className="relative w-40 h-40 rounded-full mb-6 overflow-hidden border-4 border-purple-400 shadow-lg">
+                            <NextImage
+                            src="https://i.pinimg.com/736x/54/81/40/548140e4219f867b9c903cd7a304a914.jpg"
+                            alt="Ayush Kumar"
+                            fill
+                            className="object-cover"
+                            />
+                        </div>
+                        <h3 className="text-3xl font-bold text-white">Ayush Kumar</h3>
+                        <p className="text-purple-300 font-medium text-lg">Founder & Lead Architect</p>
+                        <div className="flex gap-6 mt-6">
+                            <a href="#" className="text-white/70 hover:text-white transition-colors"><Github size={28} /></a>
+                            <a href="#" className="text-white/70 hover:text-white transition-colors"><Linkedin size={28} /></a>
+                            <a href="#" className="text-white/70 hover:text-white transition-colors"><Twitter size={28} /></a>
+                        </div>
+                    </div>
+
+                     <div className="text-center">
+                        <h4 className="text-xl font-semibold mb-4 text-purple-300">Key Technologies</h4>
+                        <div className="flex justify-center flex-wrap gap-4 text-sm">
+                            <span className="px-4 py-2 rounded-full bg-white/10">Next.js</span>
+                            <span className="px-4 py-2 rounded-full bg-white/10">React</span>
+                            <span className="px-4 py-2 rounded-full bg-white/10">Firebase</span>
+                            <span className="px-4 py-2 rounded-full bg-white/10">Genkit</span>
+                            <span className="px-4 py-2 rounded-full bg-white/10">Tailwind CSS</span>
+                            <span className="px-4 py-2 rounded-full bg-white/10">ShadCN/UI</span>
+                        </div>
+                    </div>
+
+                  </CardContent>
+                </Card>
+            </div>
+
+
         </CardContent>
       </Card>
     </div>
