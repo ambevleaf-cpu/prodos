@@ -85,7 +85,7 @@ export default function SocialMediaApp() {
   // Create user profile if it doesn't exist
   useEffect(() => {
     if (user && !profileLoading && !currentUserProfile && firestore) {
-      const newUserProfile: Omit<UserProfile, 'followers'> = {
+      const newUserProfile: UserProfile = {
         id: user.uid,
         name: user.displayName || 'New User',
         username: user.email?.split('@')[0] || `user${Date.now()}`,
@@ -303,8 +303,7 @@ export default function SocialMediaApp() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{u.name}</h3>
                   <p className="text-sm text-gray-500">@{u.username}</p>
-                   {/* Follower count is not directly available, can be calculated with a query */}
-                  <p className="text-xs text-gray-400 mt-1">... followers</p>
+                  <p className="text-xs text-gray-400 mt-1">Following {u.following?.length || 0}</p>
                 </div>
                 <button
                   onClick={() => handleFollow(u.id)}
