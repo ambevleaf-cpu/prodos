@@ -14,87 +14,19 @@ export default function SocialMediaApp() {
     avatar: '👤'
   });
 
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      user: { name: 'Sarah Chen', username: '@sarahc', avatar: '👩‍💻' },
-      content: 'Just launched my new project! So excited to share it with everyone 🚀',
-      image: null,
-      likes: 24,
-      comments: 5,
-      timestamp: '2h ago',
-      liked: false
-    },
-    {
-      id: 2,
-      user: { name: 'Mike Johnson', username: '@mikej', avatar: '👨‍🎨' },
-      content: 'Beautiful sunset at the beach today 🌅',
-      image: null,
-      likes: 156,
-      comments: 12,
-      timestamp: '4h ago',
-      liked: true
-    },
-    {
-      id: 3,
-      user: { name: 'Emily Park', username: '@emilyp', avatar: '👩‍🔬' },
-      content: 'Coffee and coding - the perfect combination ☕💻',
-      image: null,
-      likes: 89,
-      comments: 8,
-      timestamp: '6h ago',
-      liked: false
-    }
-  ]);
+  const [posts, setPosts] = useState<any[]>([]);
 
-  const [users] = useState([
-    { id: 2, name: 'Sarah Chen', username: '@sarahc', avatar: '👩‍💻', followers: 1234, following: false },
-    { id: 3, name: 'Mike Johnson', username: '@mikej', avatar: '👨‍🎨', followers: 5678, following: true },
-    { id: 4, name: 'Emily Park', username: '@emilyp', avatar: '👩‍🔬', followers: 890, following: false },
-    { id: 5, name: 'Alex Rivera', username: '@alexr', avatar: '👨‍💼', followers: 2345, following: false },
-    { id: 6, name: 'Lisa Wang', username: '@lisaw', avatar: '👩‍🎤', followers: 3456, following: true },
-  ]);
+  const [users] = useState<any[]>([]);
 
-  const [notifications] = useState([
-    { id: 1, type: 'like', user: 'Sarah Chen', avatar: '👩‍💻', content: 'liked your post', time: '5m ago', read: false },
-    { id: 2, type: 'comment', user: 'Mike Johnson', avatar: '👨‍🎨', content: 'commented on your post', time: '1h ago', read: false },
-    { id: 3, type: 'follow', user: 'Emily Park', avatar: '👩‍🔬', content: 'started following you', time: '2h ago', read: true },
-    { id: 4, type: 'like', user: 'Alex Rivera', avatar: '👨‍💼', content: 'liked your post', time: '3h ago', read: true },
-    { id: 5, type: 'comment', user: 'Lisa Wang', avatar: '👩‍🎤', content: 'commented on your post', time: '5h ago', read: true },
-  ]);
+  const [notifications] = useState<any[]>([]);
 
-  const [userPosts, setUserPosts] = useState([
-    {
-      id: 101,
-      content: 'Working on something exciting! 🎉',
-      likes: 45,
-      comments: 8,
-      timestamp: '1d ago',
-      liked: false
-    },
-    {
-      id: 102,
-      content: 'Just finished a great coding session 💻',
-      likes: 32,
-      comments: 4,
-      timestamp: '2d ago',
-      liked: true
-    },
-    {
-      id: 103,
-      content: 'Learning something new every day! 📚',
-      likes: 28,
-      comments: 6,
-      timestamp: '3d ago',
-      liked: false
-    },
-  ]);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
 
   const [newPost, setNewPost] = useState('');
   const [activeTab, setActiveTab] = useState('home');
   const [showNewPost, setShowNewPost] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [followingUsers, setFollowingUsers] = useState([3, 6]);
+  const [followingUsers, setFollowingUsers] = useState<number[]>([]);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editedName, setEditedName] = useState(currentUser.name);
   const [editedUsername, setEditedUsername] = useState(currentUser.username);
@@ -199,42 +131,50 @@ export default function SocialMediaApp() {
 
       {/* Feed */}
       <div className="space-y-4">
-        {posts.map(post => (
-          <div key={post.id} className="bg-white rounded-lg shadow-sm">
-            <div className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
-                {post.user.avatar}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{post.user.name}</h3>
-                <p className="text-sm text-gray-500">{post.user.username} · {post.timestamp}</p>
-              </div>
-            </div>
-
-            <div className="px-4 pb-3">
-              <p className="text-gray-800">{post.content}</p>
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
-              <button
-                onClick={() => handleLike(post.id)}
-                className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-              >
-                <Heart
-                  className={`w-5 h-5 ${post.liked ? 'fill-red-500 text-red-500' : ''}`}
-                />
-                <span className={post.liked ? 'text-red-500' : ''}>{post.likes}</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
-                <MessageCircle className="w-5 h-5" />
-                <span>{post.comments}</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-green-500">
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
+        {posts.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-xl font-semibold">No posts yet</h3>
+            <p>Be the first to share something!</p>
           </div>
-        ))}
+        ) : (
+          posts.map(post => (
+            <div key={post.id} className="bg-white rounded-lg shadow-sm">
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
+                  {post.user.avatar}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{post.user.name}</h3>
+                  <p className="text-sm text-gray-500">{post.user.username} · {post.timestamp}</p>
+                </div>
+              </div>
+
+              <div className="px-4 pb-3">
+                <p className="text-gray-800">{post.content}</p>
+              </div>
+
+              <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
+                <button
+                  onClick={() => handleLike(post.id)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
+                >
+                  <Heart
+                    className={`w-5 h-5 ${post.liked ? 'fill-red-500 text-red-500' : ''}`}
+                  />
+                  <span className={post.liked ? 'text-red-500' : ''}>{post.likes}</span>
+                </button>
+                <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>{post.comments}</span>
+                </button>
+                <button className="flex items-center gap-2 text-gray-600 hover:text-green-500">
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </>
   );
@@ -257,66 +197,82 @@ export default function SocialMediaApp() {
 
       {/* User Results */}
       <div className="space-y-3">
-        {filteredUsers.map(user => (
-          <div key={user.id} className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
-                {user.avatar}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                <p className="text-sm text-gray-500">{user.username}</p>
-                <p className="text-xs text-gray-400 mt-1">{user.followers} followers</p>
-              </div>
-              <button
-                onClick={() => handleFollow(user.id)}
-                className={`px-6 py-2 rounded-lg font-medium ${
-                  followingUsers.includes(user.id)
-                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {followingUsers.includes(user.id) ? 'Following' : 'Follow'}
-              </button>
-            </div>
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-xl font-semibold">No users found</h3>
+            <p>Try a different search.</p>
           </div>
-        ))}
+        ) : (
+          filteredUsers.map(user => (
+            <div key={user.id} className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
+                  {user.avatar}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                  <p className="text-sm text-gray-500">{user.username}</p>
+                  <p className="text-xs text-gray-400 mt-1">{user.followers} followers</p>
+                </div>
+                <button
+                  onClick={() => handleFollow(user.id)}
+                  className={`px-6 py-2 rounded-lg font-medium ${
+                    followingUsers.includes(user.id)
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {followingUsers.includes(user.id) ? 'Following' : 'Follow'}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 
   const renderNotificationsPage = () => (
     <div className="space-y-3">
-      {notifications.map(notif => (
-        <div
-          key={notif.id}
-          className={`bg-white rounded-lg shadow-sm p-4 ${
-            !notif.read ? 'border-l-4 border-blue-600' : ''
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
-              {notif.avatar}
-            </div>
-            <div className="flex-1">
-              <p className="text-gray-800">
-                <span className="font-semibold">{notif.user}</span>{' '}
-                <span className="text-gray-600">{notif.content}</span>
-              </p>
-              <p className="text-sm text-gray-400 mt-1">{notif.time}</p>
-            </div>
-            {notif.type === 'like' && (
-              <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-            )}
-            {notif.type === 'comment' && (
-              <MessageCircle className="w-6 h-6 text-blue-500" />
-            )}
-            {notif.type === 'follow' && (
-              <User className="w-6 h-6 text-green-500" />
-            )}
-          </div>
+      {notifications.length === 0 ? (
+        <div className="text-center py-16 text-gray-500">
+          <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <h3 className="text-xl font-semibold">No new notifications</h3>
+          <p>You're all caught up!</p>
         </div>
-      ))}
+      ) : (
+        notifications.map(notif => (
+          <div
+            key={notif.id}
+            className={`bg-white rounded-lg shadow-sm p-4 ${
+              !notif.read ? 'border-l-4 border-blue-600' : ''
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
+                {notif.avatar}
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-800">
+                  <span className="font-semibold">{notif.user}</span>{' '}
+                  <span className="text-gray-600">{notif.content}</span>
+                </p>
+                <p className="text-sm text-gray-400 mt-1">{notif.time}</p>
+              </div>
+              {notif.type === 'like' && (
+                <Heart className="w-6 h-6 text-red-500 fill-red-500" />
+              )}
+              {notif.type === 'comment' && (
+                <MessageCircle className="w-6 h-6 text-blue-500" />
+              )}
+              {notif.type === 'follow' && (
+                <User className="w-6 h-6 text-green-500" />
+              )}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 
@@ -337,7 +293,7 @@ export default function SocialMediaApp() {
               <p className="text-sm text-gray-500">Posts</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">1.2K</p>
+              <p className="text-2xl font-bold text-gray-900">0</p>
               <p className="text-sm text-gray-500">Followers</p>
             </div>
             <div className="text-center">
@@ -354,37 +310,45 @@ export default function SocialMediaApp() {
 
       {/* User Posts */}
       <div className="space-y-4">
-        {userPosts.map(post => (
-          <div key={post.id} className="bg-white rounded-lg shadow-sm">
-            <div className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl">
-                {currentUser.avatar}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{currentUser.name}</h3>
-                <p className="text-sm text-gray-500">{currentUser.username} · {post.timestamp}</p>
-              </div>
-            </div>
-
-            <div className="px-4 pb-3">
-              <p className="text-gray-800">{post.content}</p>
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
-              <button className="flex items-center gap-2 text-gray-600 hover:text-red-500">
-                <Heart className={`w-5 h-5 ${post.liked ? 'fill-red-500 text-red-500' : ''}`} />
-                <span className={post.liked ? 'text-red-500' : ''}>{post.likes}</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
-                <MessageCircle className="w-5 h-5" />
-                <span>{post.comments}</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-green-500">
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
+        {userPosts.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-xl font-semibold">No posts yet</h3>
+            <p>Your posts will appear here.</p>
           </div>
-        ))}
+        ) : (
+          userPosts.map(post => (
+            <div key={post.id} className="bg-white rounded-lg shadow-sm">
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl">
+                  {currentUser.avatar}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{currentUser.name}</h3>
+                  <p className="text-sm text-gray-500">{currentUser.username} · {post.timestamp}</p>
+                </div>
+              </div>
+
+              <div className="px-4 pb-3">
+                <p className="text-gray-800">{post.content}</p>
+              </div>
+
+              <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-red-500">
+                  <Heart className={`w-5 h-5 ${post.liked ? 'fill-red-500 text-red-500' : ''}`} />
+                  <span className={post.liked ? 'text-red-500' : ''}>{post.likes}</span>
+                </button>
+                <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>{post.comments}</span>
+                </button>
+                <button className="flex items-center gap-2 text-gray-600 hover:text-green-500">
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
