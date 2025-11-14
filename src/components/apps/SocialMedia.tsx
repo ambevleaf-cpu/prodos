@@ -18,6 +18,7 @@ import {
   arrayRemove,
   where,
   writeBatch,
+  setDoc,
 } from 'firebase/firestore';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
@@ -504,5 +505,3 @@ export default function SocialMediaApp() {
     </div>
   );
 }
-
-    
