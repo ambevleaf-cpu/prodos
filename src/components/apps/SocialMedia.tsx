@@ -303,7 +303,10 @@ export default function SocialMediaApp() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{u.name}</h3>
                   <p className="text-sm text-gray-500">@{u.username}</p>
-                  <p className="text-xs text-gray-400 mt-1">Following {u.following?.length || 0}</p>
+                  <div className="text-xs text-gray-400 mt-1 flex gap-4">
+                    <span>Following {u.following?.length || 0}</span>
+                    <span>Followers ...</span>
+                  </div>
                 </div>
                 <button
                   onClick={() => handleFollow(u.id)}
