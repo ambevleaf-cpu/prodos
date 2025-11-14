@@ -42,5 +42,12 @@ export const playlist: Track[] = [
         url: "https://cdn.pixabay.com/audio/2022/11/17/audio_84f97d5162.mp3",
         coverArt: "https://picsum.photos/seed/music5/500/500",
     },
+    {
+        id: 6,
+        title: "Morning Garden",
+        artist: "Olexy",
+        url: "https://cdn.pixabay.com/audio/2022/10/24/audio_26b6432299.mp3",
+        coverArt: "https://picsum.photos/seed/music6/500/500",
+    },
 ];
     
