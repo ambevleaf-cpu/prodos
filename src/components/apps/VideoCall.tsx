@@ -14,6 +14,7 @@ import {
   where,
   serverTimestamp,
   deleteDoc,
+  getDocs,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -68,9 +69,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
       return stream;
     } catch (error) {
       console.error("Error accessing media devices.", error);
@@ -82,11 +80,25 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
       return null;
     }
   }, [toast]);
+  
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
 
   const hangUp = useCallback(async () => {
     if (pc.current) {
-      pc.current.ontrack = null;
-      pc.current.onicecandidate = null;
+      pc.current.getTransceivers().forEach(transceiver => {
+        transceiver.stop();
+      });
       pc.current.close();
       pc.current = null;
     }
@@ -102,25 +114,17 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
       const callDocRef = doc(firestore, 'calls', callId);
       const callSnapshot = await getDoc(callDocRef);
       if (callSnapshot.exists()) {
-        try {
-          const batch = writeBatch(firestore);
-          const callerCandidatesQuery = query(collection(callDocRef, 'callerCandidates'));
-          const calleeCandidatesQuery = query(collection(callDocRef, 'calleeCandidates'));
-          
-          const callerCandidatesSnapshot = await getDoc(callerCandidatesQuery as any);
-          callerCandidatesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-
-          const calleeCandidatesSnapshot = await getDoc(calleeCandidatesQuery as any);
-          calleeCandidatesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-
-          batch.delete(callDocRef);
-          await batch.commit();
-        } catch (e) {
-           // Fallback to just updating status if batch fails
-           if (callSnapshot.data()?.status !== 'ended') {
-             await updateDoc(callDocRef, { status: 'ended' });
-           }
-        }
+        const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
+        const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
+        
+        const callerCandidatesSnapshot = await getDocs(callerCandidatesCollection);
+        const calleeCandidatesSnapshot = await getDocs(calleeCandidatesCollection);
+        
+        const batch = writeBatch(firestore);
+        callerCandidatesSnapshot.forEach(doc => batch.delete(doc.ref));
+        calleeCandidatesSnapshot.forEach(doc => batch.delete(doc.ref));
+        batch.delete(callDocRef);
+        await batch.commit();
       }
     }
     
@@ -153,9 +157,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
     const remote = new MediaStream();
     setRemoteStream(remote);
-    if(remoteVideoRef.current){
-        remoteVideoRef.current.srcObject = remote;
-    }
 
     pc.current.ontrack = (event) => {
       event.streams[0].getTracks().forEach(track => {
@@ -213,9 +214,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
         const remote = new MediaStream();
         setRemoteStream(remote);
-        if(remoteVideoRef.current){
-            remoteVideoRef.current.srcObject = remote;
-        }
 
         pc.current.ontrack = (event) => {
             event.streams[0].getTracks().forEach(track => {
@@ -258,22 +256,15 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     };
     
     // Only run answer logic if we are the callee
-    getDoc(doc(firestore, 'calls', callId)).then(snapshot => {
-      if (snapshot.exists() && snapshot.data().calleeId === currentUser.uid) {
+    const callDocRef = doc(firestore, 'calls', callId);
+    getDoc(callDocRef).then(snapshot => {
+      if (snapshot.exists() && snapshot.data().calleeId === currentUser.uid && !pc.current) {
         answerCall();
       }
     });
 
   }, [isCallActive, callId, currentUser, firestore, setupStreams, hangUp]);
 
-  useEffect(() => {
-    if (localStream && localVideoRef.current) {
-      localVideoRef.current.srcObject = localStream;
-    }
-    if (remoteStream && remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = remoteStream;
-    }
-  }, [localStream, remoteStream]);
 
   const toggleMute = () => {
     localStream?.getAudioTracks().forEach(track => {
