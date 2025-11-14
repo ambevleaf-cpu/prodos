@@ -170,6 +170,7 @@ export default function Desktop() {
   const closeWindow = useCallback((windowId: string) => {
     const win = windows.find(w => w.id === windowId);
     if (win?.appId === 'videoCall') {
+       // The hangUp logic inside VideoCallApp will handle call state changes
        setCallDetails({ callId: null, isCallActive: false });
     }
     setWindows(prev => prev.filter(w => w.id !== windowId));

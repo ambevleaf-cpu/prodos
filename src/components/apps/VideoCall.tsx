@@ -49,23 +49,39 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
   const hangUp = async (idOfCall?: string) => {
     const callToHangup = idOfCall || callId;
-
+    
     if (pc.current) {
+        // Stop all senders
+        pc.current.getSenders().forEach(sender => {
+            if (sender.track) {
+                sender.track.stop();
+            }
+        });
         pc.current.close();
+        pc.current = null;
     }
     
-    localStream?.getTracks().forEach(track => track.stop());
-    remoteStream?.getTracks().forEach(track => track.stop());
+    // Stop local stream tracks
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    // Stop remote stream tracks
+    if (remoteStream) {
+        remoteStream.getTracks().forEach(track => track.stop());
+    }
     
     setLocalStream(null);
     setRemoteStream(null);
-    pc.current = null;
     
     if (callToHangup && firestore) {
-        const callDoc = doc(firestore, 'calls', callToHangup);
-        const callSnapshot = await getDoc(callDoc);
-        if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
-            await updateDoc(callDoc, { status: 'ended' });
+        try {
+            const callDoc = doc(firestore, 'calls', callToHangup);
+            const callSnapshot = await getDoc(callDoc);
+            if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
+                await updateDoc(callDoc, { status: 'ended' });
+            }
+        } catch (e) {
+            console.error("Error updating call status on hangup:", e);
         }
     }
     
@@ -193,9 +209,11 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
             if (!pc.current?.currentRemoteDescription && data?.answer) {
                 pc.current?.setRemoteDescription(new RTCSessionDescription(data.answer));
             }
-            if (data?.status === 'rejected' || (data?.status === 'ended' && callId === callDocRef.id)) {
-                toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
-                hangUp(callDocRef.id);
+            if (data?.status === 'rejected' || data?.status === 'ended') {
+                if (callId === callDocRef.id || !callId) { // Only hangup if it's the current call
+                    toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
+                    hangUp(callDocRef.id);
+                }
             }
         });
 
@@ -257,7 +275,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
                 <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded-md text-xs">You</div>
                 </Card>
                 <Card className="bg-black/30 border-gray-700 relative overflow-hidden flex items-center justify-center">
-                    {remoteStream && remoteStream.active ? (
+                    {remoteStream && remoteStream.getTracks().length > 0 ? (
                         <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                     ) : (
                        <div className="text-center text-gray-400">

@@ -16,7 +16,7 @@ import { Phone, PhoneOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface IncomingCallManagerProps {
-  setCallDetails: (details: { callId: string; isCallActive: boolean }) => void;
+  setCallDetails: (details: { callId: string | null; isCallActive: boolean }) => void;
   openVideoCallApp: () => void;
 }
 
@@ -54,11 +54,11 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
     return () => unsubscribe();
   }, [user, firestore]);
 
-  const answerCall = async () => {
+  const answerCall = () => {
     if (!incomingCall) return;
-
-    openVideoCallApp();
+    
     setCallDetails({ callId: incomingCall.id, isCallActive: true });
+    openVideoCallApp();
     
     setIncomingCall(null);
   };
