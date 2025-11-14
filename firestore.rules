@@ -63,6 +63,27 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId); // Only the owner can update their post
       allow delete: if isOwner(resource.data.userId); // Only the owner can delete their post
     }
+    
+    /**
+     * @description Manages access to WebRTC signaling data for video calls.
+     * @path /calls/{callId}
+     */
+    match /calls/{callId} {
+      // Any authenticated user can create, read, and update call documents.
+      // This is a permissive rule for prototyping. In a production scenario,
+      // you would restrict access to only the participants of the call.
+      allow read, write: if request.auth != null;
+    }
+    
+    /**
+     * @description Manages access to ICE candidates for a video call.
+     * @path /calls/{callId}/callerCandidates/{candidateId}
+     * @path /calls/{callId}/calleeCandidates/{candidateId}
+     */
+    match /calls/{callId}/{candidatesCollection}/{candidateId} {
+        allow read, write: if request.auth != null;
+    }
+
 
     /**
      * @description Manages access to application data for a specific user.

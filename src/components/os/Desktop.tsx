@@ -16,6 +16,7 @@ import Translator from '../apps/Translator';
 import Clock from '../apps/Clock';
 import TaskManager from '../apps/TaskManager';
 import SocialMediaApp from '../apps/SocialMedia';
+import VideoCallApp from '../apps/VideoCall';
 import TaskListWidget from './TaskListWidget';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import type { Task } from '@/lib/types';
@@ -49,6 +50,7 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   clock: Clock,
   taskManager: TaskManager,
   socialMedia: SocialMediaApp,
+  videoCall: VideoCallApp,
 };
 
 
@@ -150,7 +152,7 @@ export default function Desktop() {
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
       width: app.id === 'calculator' ? 450 : (app.id === 'clock' || app.id === 'taskManager' ? 900 : 800),
-      height: app.id === 'clock' || app.id === 'taskManager' ? 700 : 600,
+      height: app.id === 'clock' || app.id === 'taskManager' || app.id === 'videoCall' ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,

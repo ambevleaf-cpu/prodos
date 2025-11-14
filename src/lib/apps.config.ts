@@ -1,4 +1,4 @@
-import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, type LucideIcon } from 'lucide-react';
+import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, Video, type LucideIcon } from 'lucide-react';
 
 export interface AppConfig {
   id: string;
@@ -46,6 +46,11 @@ export const APPS_CONFIG: AppConfig[] = [
     id: 'socialMedia',
     title: 'Social Media',
     icon: Users,
+  },
+  {
+    id: 'videoCall',
+    title: 'Video Call',
+    icon: Video,
   },
   {
     id: 'settings',

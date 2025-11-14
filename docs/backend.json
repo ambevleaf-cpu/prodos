@@ -309,6 +309,33 @@
         "following": { "type": "array", "items": { "type": "string" }, "description": "An array of user UIDs that this user is following." }
       },
       "required": ["id", "name", "username", "avatar"]
+    },
+     "VideoCall": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VideoCall",
+      "description": "Represents a WebRTC video call signaling document.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the video call session." },
+        "offer": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["offer"] },
+            "sdp": { "type": "string" }
+          },
+          "required": ["type", "sdp"],
+          "description": "The SDP offer from the caller."
+        },
+        "answer": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["answer"] },
+            "sdp": { "type": "string" }
+          },
+          "required": ["type", "sdp"],
+          "description": "The SDP answer from the callee."
+        }
+      }
     }
   },
   "auth": {
@@ -334,6 +361,15 @@
           "schema": { "$ref": "#/backend/entities/Post" },
           "description": "Stores all social media posts. This is a public collection readable by any authenticated user.",
           "params": [{ "name": "postId", "description": "The ID of the post." }]
+        }
+      },
+       {
+        "path": "/calls/{callId}",
+        "definition": {
+          "entityName": "VideoCall",
+          "schema": { "$ref": "#/backend/entities/VideoCall" },
+          "description": "Stores WebRTC signaling data for video calls. Documents are readable and writable by any authenticated user to facilitate call setup.",
+          "params": [{ "name": "callId", "description": "The unique ID for the call session." }]
         }
       },
       {
