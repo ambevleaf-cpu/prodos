@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, Shuffle, Repeat } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { playlist, type Track } from '@/lib/music-data';
 import { cn } from '@/lib/utils';
 
@@ -177,5 +178,3 @@ export default function MusicPlayer() {
     </div>
   );
 }
-
-    
