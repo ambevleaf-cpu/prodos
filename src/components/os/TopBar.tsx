@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchDialog from './SearchDialog';
+import NotificationCenter from './NotificationCenter';
 
 interface TopBarProps {
   onReset: () => void;
@@ -28,7 +29,7 @@ export default function TopBar({ onReset }: TopBarProps) {
         <div>
           <span className="font-bold">Prod</span> OS
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -45,6 +46,7 @@ export default function TopBar({ onReset }: TopBarProps) {
           >
             <Search className="w-4 h-4" />
           </Button>
+          <NotificationCenter />
           <span>{currentTime}</span>
         </div>
       </header>

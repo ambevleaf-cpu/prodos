@@ -140,6 +140,9 @@ export default function MessagesApp() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentUser || !selectedConversation || !firestore) return;
+    
+    const otherParticipantId = selectedConversation.participants.find(p => p !== currentUser.uid);
+    if (!otherParticipantId) return;
 
     const messagesColRef = collection(firestore, 'conversations', selectedConversation.id!, 'messages');
     const messagePayload: Message = {
@@ -163,6 +166,19 @@ export default function MessagesApp() {
          errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: conversationRef.path, operation: 'write', requestResourceData: conversationUpdatePayload
         }));
+    });
+    
+    // Create notification for the other user
+    const notificationCol = collection(firestore, 'users', otherParticipantId, 'notifications');
+    const notificationPayload = {
+        applicationId: 'messages',
+        title: `New message from ${currentUser.displayName || 'a user'}`,
+        message: newMessage,
+        timestamp: serverTimestamp(),
+        isRead: false,
+    };
+    addDoc(notificationCol, notificationPayload).catch(error => {
+        console.error("Error creating notification:", error);
     });
 
     setNewMessage('');
@@ -307,5 +323,3 @@ export default function MessagesApp() {
     </div>
   );
 }
-
-    

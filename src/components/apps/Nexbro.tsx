@@ -3,8 +3,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Paperclip, Smile, MoreVertical, Sparkles, Zap, Heart, Menu, X, Loader2 } from 'lucide-react';
 import { handleNexbroChat } from '@/app/actions';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 
 export default function NexbroChatbot() {
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -27,7 +32,7 @@ export default function NexbroChatbot() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (input.trim()) {
+    if (input.trim() && user && firestore) {
       const newMessage = {
         id: Date.now(),
         text: input,
@@ -58,6 +63,19 @@ export default function NexbroChatbot() {
       
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
+      
+      // Create notification for the user
+      const notificationCol = collection(firestore, 'users', user.uid, 'notifications');
+      const notificationPayload = {
+          applicationId: 'nexbro',
+          title: `New message from Nexbro`,
+          message: botResponseText,
+          timestamp: serverTimestamp(),
+          isRead: false,
+      };
+      addDoc(notificationCol, notificationPayload).catch(error => {
+          console.error("Error creating notification:", error);
+      });
     }
   };
 
@@ -171,7 +189,7 @@ export default function NexbroChatbot() {
               style={{ 
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 100%)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.3)'
+                border: '1px solid rgba(255,255,0.3)'
               }}
             >
               {reply}

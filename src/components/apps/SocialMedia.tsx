@@ -183,6 +183,21 @@ export default function SocialMediaApp() {
       .catch(error => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: currentUserRef.path, operation: 'update', requestResourceData: { following: '...' } }));
       });
+    
+    if (!isFollowing) {
+        const notificationCol = collection(firestore, 'users', targetUserId, 'notifications');
+        const notificationPayload = {
+            applicationId: 'socialMedia',
+            title: 'New Follower',
+            message: `${currentUserProfile.name || 'Someone'} started following you.`,
+            timestamp: serverTimestamp(),
+            isRead: false,
+        };
+        addDoc(notificationCol, notificationPayload).catch(error => {
+            console.error("Error creating notification:", error);
+            // Optionally emit a permission error if needed for notifications
+        });
+    }
   };
   
   const handleSaveProfile = async () => {
