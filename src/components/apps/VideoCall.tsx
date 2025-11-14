@@ -69,6 +69,9 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       setLocalStream(stream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
       return stream;
     } catch (error) {
       console.error("Error accessing media devices.", error);
@@ -81,12 +84,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     }
   }, [toast]);
   
-  useEffect(() => {
-    if (localStream && localVideoRef.current) {
-        localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
-
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStream;
@@ -124,7 +121,12 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         callerCandidatesSnapshot.forEach(doc => batch.delete(doc.ref));
         calleeCandidatesSnapshot.forEach(doc => batch.delete(doc.ref));
         batch.delete(callDocRef);
-        await batch.commit();
+        batch.commit().catch(err => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: callDocRef.path,
+                operation: 'delete',
+            }));
+        });
       }
     }
     
@@ -140,63 +142,86 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     setCallDetails({ callId: null, isCallActive: true });
     
     const callCollectionRef = collection(firestore, 'calls');
-    const callDocRef = await addDoc(callCollectionRef, {
+    const callPayload = {
         callerId: currentUser.uid,
         callerName: currentUser.displayName || currentUser.email,
         calleeId: callee.id,
         calleeName: callee.name,
         status: 'offering',
         createdAt: serverTimestamp(),
-    });
-
-    setCallDetails({ callId: callDocRef.id, isCallActive: true });
-    
-    pc.current = new RTCPeerConnection(servers);
-
-    stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
-
-    const remote = new MediaStream();
-    setRemoteStream(remote);
-
-    pc.current.ontrack = (event) => {
-      event.streams[0].getTracks().forEach(track => {
-        remote.addTrack(track);
-      });
     };
     
-    const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
-    pc.current.onicecandidate = event => {
-      if (event.candidate) {
-        addDoc(callerCandidatesCollection, event.candidate.toJSON());
-      }
-    };
+    try {
+        const callDocRef = await addDoc(callCollectionRef, callPayload);
 
-    const offerDescription = await pc.current.createOffer();
-    await pc.current.setLocalDescription(offerDescription);
+        setCallDetails({ callId: callDocRef.id, isCallActive: true });
+        
+        pc.current = new RTCPeerConnection(servers);
 
-    const offer = { type: offerDescription.type, sdp: offerDescription.sdp };
-    await updateDoc(callDocRef, { offer, status: 'ringing' });
+        stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
 
-    onSnapshot(callDocRef, (snapshot) => {
-      const data = snapshot.data();
-      if (!pc.current?.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc.current?.setRemoteDescription(answerDescription);
-      }
-      if (data?.status === 'ended' || data?.status === 'rejected') {
-        hangUp();
-      }
-    });
+        const remote = new MediaStream();
+        setRemoteStream(remote);
 
-    const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
-    onSnapshot(calleeCandidatesCollection, snapshot => {
-      snapshot.docChanges().forEach(change => {
-        if (change.type === 'added') {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current?.addIceCandidate(candidate);
-        }
-      });
-    });
+        pc.current.ontrack = (event) => {
+          event.streams[0].getTracks().forEach(track => {
+            remote.addTrack(track);
+          });
+        };
+        
+        const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
+        pc.current.onicecandidate = event => {
+          if (event.candidate) {
+            addDoc(callerCandidatesCollection, event.candidate.toJSON()).catch(err => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: callerCandidatesCollection.path,
+                    operation: 'create',
+                    requestResourceData: event.candidate.toJSON(),
+                }));
+            });
+          }
+        };
+
+        const offerDescription = await pc.current.createOffer();
+        await pc.current.setLocalDescription(offerDescription);
+
+        const offer = { type: offerDescription.type, sdp: offerDescription.sdp };
+        const updatePayload = { offer, status: 'ringing' };
+        updateDoc(callDocRef, updatePayload).catch(err => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: callDocRef.path,
+                operation: 'update',
+                requestResourceData: updatePayload,
+            }));
+        });
+
+        onSnapshot(callDocRef, (snapshot) => {
+          const data = snapshot.data();
+          if (!pc.current?.currentRemoteDescription && data?.answer) {
+            const answerDescription = new RTCSessionDescription(data.answer);
+            pc.current?.setRemoteDescription(answerDescription);
+          }
+          if (data?.status === 'ended' || data?.status === 'rejected') {
+            hangUp();
+          }
+        });
+
+        const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
+        onSnapshot(calleeCandidatesCollection, snapshot => {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added') {
+              const candidate = new RTCIceCandidate(change.doc.data());
+              pc.current?.addIceCandidate(candidate);
+            }
+          });
+        });
+    } catch (err) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: callCollectionRef.path,
+            operation: 'create',
+            requestResourceData: callPayload,
+        }));
+    }
   };
   
   // This effect handles the 'callee' side
@@ -224,7 +249,13 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
         pc.current.onicecandidate = event => {
             if (event.candidate) {
-                addDoc(calleeCandidatesCollection, event.candidate.toJSON());
+                addDoc(calleeCandidatesCollection, event.candidate.toJSON()).catch(err => {
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: calleeCandidatesCollection.path,
+                        operation: 'create',
+                        requestResourceData: event.candidate.toJSON(),
+                    }));
+                });
             }
         };
 
@@ -237,7 +268,14 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
             await pc.current.setLocalDescription(answerDescription);
 
             const answer = { type: answerDescription.type, sdp: answerDescription.sdp };
-            await updateDoc(callDocRef, { answer, status: 'answered' });
+            const updatePayload = { answer, status: 'answered' };
+            updateDoc(callDocRef, updatePayload).catch(err => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: callDocRef.path,
+                    operation: 'update',
+                    requestResourceData: updatePayload,
+                }));
+            });
         }
 
         onSnapshot(collection(callDocRef, 'callerCandidates'), snapshot => {
@@ -345,3 +383,5 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     </div>
   );
 }
+
+    
