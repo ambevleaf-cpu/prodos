@@ -51,7 +51,6 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     const callToHangup = idOfCall || callId;
     
     if (pc.current) {
-        // Stop all senders
         pc.current.getSenders().forEach(sender => {
             if (sender.track) {
                 sender.track.stop();
@@ -61,11 +60,9 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         pc.current = null;
     }
     
-    // Stop local stream tracks
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
     }
-    // Stop remote stream tracks
     if (remoteStream) {
         remoteStream.getTracks().forEach(track => track.stop());
     }
@@ -90,7 +87,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
   
   // Effect for answering a call
   useEffect(() => {
-    if (isCallActive && callId && currentUser && firestore) {
+    if (isCallActive && callId && currentUser && firestore && !pc.current) {
       const answer = async () => {
         pc.current = new RTCPeerConnection(servers);
 
@@ -155,6 +152,8 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
   const createCall = async (callee: UserProfile) => {
     if (!currentUser || !firestore) return;
     
+    setCallDetails({ callId: null, isCallActive: true });
+    
     pc.current = new RTCPeerConnection(servers);
     
     const local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -210,7 +209,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
                 pc.current?.setRemoteDescription(new RTCSessionDescription(data.answer));
             }
             if (data?.status === 'rejected' || data?.status === 'ended') {
-                if (callId === callDocRef.id || !callId) { // Only hangup if it's the current call
+                if (callId === callDocRef.id || !callId) {
                     toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
                     hangUp(callDocRef.id);
                 }
