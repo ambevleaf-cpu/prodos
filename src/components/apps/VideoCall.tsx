@@ -1,11 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, addDoc, onSnapshot, updateDoc, getDoc, writeBatch, query, where, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  collection,
+  addDoc,
+  onSnapshot,
+  updateDoc,
+  getDoc,
+  writeBatch,
+  query,
+  where,
+  serverTimestamp,
+  deleteDoc,
+} from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Phone, PhoneOff, Video as VideoIcon, VideoOff, Mic, MicOff, User, Loader2 } from 'lucide-react';
+import { Phone, PhoneOff, Video as VideoIcon, VideoOff, Mic, MicOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -39,244 +51,256 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  
+  const { callId, isCallActive } = callDetails;
 
   const usersQuery = useMemoFirebase(() => 
     firestore && currentUser ? query(collection(firestore, 'users'), where('id', '!=', currentUser.uid)) : null
   , [firestore, currentUser]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
-  
-  const { callId, isCallActive } = callDetails;
 
-  const hangUp = async (idOfCall?: string) => {
-    const callToHangup = idOfCall || callId;
-    
+  const setupStreams = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setLocalStream(stream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      return stream;
+    } catch (error) {
+      console.error("Error accessing media devices.", error);
+      toast({
+        variant: "destructive",
+        title: "Camera/Mic Error",
+        description: "Could not access camera or microphone.",
+      });
+      return null;
+    }
+  }, [toast]);
+
+  const hangUp = useCallback(async () => {
     if (pc.current) {
-        pc.current.getSenders().forEach(sender => {
-            if (sender.track) {
-                sender.track.stop();
-            }
-        });
-        pc.current.close();
-        pc.current = null;
+      pc.current.ontrack = null;
+      pc.current.onicecandidate = null;
+      pc.current.close();
+      pc.current = null;
     }
-    
+
     if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-    }
-    if (remoteStream) {
-        remoteStream.getTracks().forEach(track => track.stop());
+      localStream.getTracks().forEach(track => track.stop());
     }
     
     setLocalStream(null);
     setRemoteStream(null);
-    
-    if (callToHangup && firestore) {
+
+    if (callId && firestore) {
+      const callDocRef = doc(firestore, 'calls', callId);
+      const callSnapshot = await getDoc(callDocRef);
+      if (callSnapshot.exists()) {
         try {
-            const callDoc = doc(firestore, 'calls', callToHangup);
-            const callSnapshot = await getDoc(callDoc);
-            if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
-                await updateDoc(callDoc, { status: 'ended' });
-            }
+          const batch = writeBatch(firestore);
+          const callerCandidatesQuery = query(collection(callDocRef, 'callerCandidates'));
+          const calleeCandidatesQuery = query(collection(callDocRef, 'calleeCandidates'));
+          
+          const callerCandidatesSnapshot = await getDoc(callerCandidatesQuery as any);
+          callerCandidatesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+          const calleeCandidatesSnapshot = await getDoc(calleeCandidatesQuery as any);
+          calleeCandidatesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+          batch.delete(callDocRef);
+          await batch.commit();
         } catch (e) {
-            console.error("Error updating call status on hangup:", e);
+           // Fallback to just updating status if batch fails
+           if (callSnapshot.data()?.status !== 'ended') {
+             await updateDoc(callDocRef, { status: 'ended' });
+           }
         }
+      }
     }
     
     setCallDetails({ callId: null, isCallActive: false });
-  };
-  
-  // Effect for answering a call
-  useEffect(() => {
-    if (isCallActive && callId && currentUser && firestore && !pc.current) {
-      const answer = async () => {
-        pc.current = new RTCPeerConnection(servers);
-
-        const local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setLocalStream(local);
-        local.getTracks().forEach((track) => {
-            pc.current?.addTrack(track, local);
-        });
-
-        const remote = new MediaStream();
-        setRemoteStream(remote);
-
-        pc.current.ontrack = (event) => {
-            event.streams[0].getTracks().forEach((track) => {
-                remote.addTrack(track);
-            });
-        };
-
-        const callDocRef = doc(firestore, 'calls', callId);
-        const answerCandidates = collection(callDocRef, 'calleeCandidates');
-        const offerCandidates = collection(callDocRef, 'callerCandidates');
-
-        pc.current.onicecandidate = (event) => {
-          if (event.candidate) {
-            addDoc(answerCandidates, event.candidate.toJSON()).catch(err => {
-                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: answerCandidates.path, operation: 'create', requestResourceData: event.candidate.toJSON() }));
-            });
-          }
-        };
-
-        try {
-            const callSnapshot = await getDoc(callDocRef);
-            const callData = callSnapshot.data();
-
-            if (callData?.offer) {
-                await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
-                
-                const answerDescription = await pc.current.createAnswer();
-                await pc.current.setLocalDescription(answerDescription);
-
-                const answerPayload = { type: answerDescription.type, sdp: answerDescription.sdp };
-                await updateDoc(callDocRef, { answer: answerPayload, status: 'answered' });
-
-                onSnapshot(offerCandidates, (snapshot) => {
-                  snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added') {
-                      pc.current?.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-                    }
-                  });
-                });
-            }
-        } catch (err) {
-            console.error("Error during call answer:", err);
-        }
-      };
-      
-      answer();
-    }
-  }, [isCallActive, callId, currentUser, firestore]);
-  
+  }, [callId, firestore, localStream, setCallDetails]);
 
   const createCall = async (callee: UserProfile) => {
     if (!currentUser || !firestore) return;
     
+    const stream = await setupStreams();
+    if (!stream) return;
+    
     setCallDetails({ callId: null, isCallActive: true });
     
-    pc.current = new RTCPeerConnection(servers);
-    
-    const local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    setLocalStream(local);
-    local.getTracks().forEach((track) => {
-        pc.current?.addTrack(track, local);
-    });
-
-    const remote = new MediaStream();
-    setRemoteStream(remote);
-
-    pc.current.ontrack = (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-            remote.addTrack(track);
-        });
-    };
-
-    const callPayload = {
+    const callCollectionRef = collection(firestore, 'calls');
+    const callDocRef = await addDoc(callCollectionRef, {
         callerId: currentUser.uid,
-        callerName: currentUser.displayName,
+        callerName: currentUser.displayName || currentUser.email,
         calleeId: callee.id,
         calleeName: callee.name,
         status: 'offering',
         createdAt: serverTimestamp(),
+    });
+
+    setCallDetails({ callId: callDocRef.id, isCallActive: true });
+    
+    pc.current = new RTCPeerConnection(servers);
+
+    stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
+
+    const remote = new MediaStream();
+    setRemoteStream(remote);
+    if(remoteVideoRef.current){
+        remoteVideoRef.current.srcObject = remote;
+    }
+
+    pc.current.ontrack = (event) => {
+      event.streams[0].getTracks().forEach(track => {
+        remote.addTrack(track);
+      });
     };
     
-    const callCollectionRef = collection(firestore, 'calls');
+    const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
+    pc.current.onicecandidate = event => {
+      if (event.candidate) {
+        addDoc(callerCandidatesCollection, event.candidate.toJSON());
+      }
+    };
 
-    try {
-        const callDocRef = await addDoc(callCollectionRef, callPayload);
-        setCallDetails({ callId: callDocRef.id, isCallActive: true });
+    const offerDescription = await pc.current.createOffer();
+    await pc.current.setLocalDescription(offerDescription);
 
-        const offerCandidates = collection(callDocRef, 'callerCandidates');
-        const answerCandidates = collection(callDocRef, 'calleeCandidates');
+    const offer = { type: offerDescription.type, sdp: offerDescription.sdp };
+    await updateDoc(callDocRef, { offer, status: 'ringing' });
 
-        pc.current.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
+    onSnapshot(callDocRef, (snapshot) => {
+      const data = snapshot.data();
+      if (!pc.current?.currentRemoteDescription && data?.answer) {
+        const answerDescription = new RTCSessionDescription(data.answer);
+        pc.current?.setRemoteDescription(answerDescription);
+      }
+      if (data?.status === 'ended' || data?.status === 'rejected') {
+        hangUp();
+      }
+    });
+
+    const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
+    onSnapshot(calleeCandidatesCollection, snapshot => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const candidate = new RTCIceCandidate(change.doc.data());
+          pc.current?.addIceCandidate(candidate);
+        }
+      });
+    });
+  };
+  
+  // This effect handles the 'callee' side
+  useEffect(() => {
+    if (!isCallActive || !callId || !currentUser || !firestore) return;
+    
+    const answerCall = async () => {
+        const stream = await setupStreams();
+        if (!stream) return;
+
+        const callDocRef = doc(firestore, 'calls', callId);
+        pc.current = new RTCPeerConnection(servers);
+
+        stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
+
+        const remote = new MediaStream();
+        setRemoteStream(remote);
+        if(remoteVideoRef.current){
+            remoteVideoRef.current.srcObject = remote;
+        }
+
+        pc.current.ontrack = (event) => {
+            event.streams[0].getTracks().forEach(track => {
+                remote.addTrack(track);
+            });
+        };
+
+        const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
+        pc.current.onicecandidate = event => {
             if (event.candidate) {
-                addDoc(offerCandidates, event.candidate.toJSON()).catch(err => {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: offerCandidates.path, operation: 'create', requestResourceData: event.candidate.toJSON() }));
-                });
+                addDoc(calleeCandidatesCollection, event.candidate.toJSON());
             }
         };
 
-        const offerDescription = await pc.current.createOffer();
-        await pc.current.setLocalDescription(offerDescription);
+        const callSnapshot = await getDoc(callDocRef);
+        if (callSnapshot.exists()) {
+            const callData = callSnapshot.data();
+            await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
 
-        const offer = { sdp: offerDescription.sdp, type: offerDescription.type };
-        await updateDoc(callDocRef, { offer, status: 'ringing' });
+            const answerDescription = await pc.current.createAnswer();
+            await pc.current.setLocalDescription(answerDescription);
 
-        onSnapshot(callDocRef, (snapshot) => {
-            const data = snapshot.data();
-            if (!pc.current?.currentRemoteDescription && data?.answer) {
-                pc.current?.setRemoteDescription(new RTCSessionDescription(data.answer));
-            }
-            if (data?.status === 'rejected' || data?.status === 'ended') {
-                if (callId === callDocRef.id || !callId) {
-                    toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
-                    hangUp(callDocRef.id);
-                }
-            }
-        });
+            const answer = { type: answerDescription.type, sdp: answerDescription.sdp };
+            await updateDoc(callDocRef, { answer, status: 'answered' });
+        }
 
-        onSnapshot(answerCandidates, (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
+        onSnapshot(collection(callDocRef, 'callerCandidates'), snapshot => {
+            snapshot.docChanges().forEach(change => {
                 if (change.type === 'added') {
                     pc.current?.addIceCandidate(new RTCIceCandidate(change.doc.data()));
                 }
             });
         });
+         onSnapshot(callDocRef, (snapshot) => {
+            const data = snapshot.data();
+            if (data?.status === 'ended') {
+                hangUp();
+            }
+        });
+    };
+    
+    // Only run answer logic if we are the callee
+    getDoc(doc(firestore, 'calls', callId)).then(snapshot => {
+      if (snapshot.exists() && snapshot.data().calleeId === currentUser.uid) {
+        answerCall();
+      }
+    });
 
-        toast({ title: "Calling...", description: `Calling ${callee.name}.` });
-
-    } catch (err) {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: callCollectionRef.path, operation: 'create', requestResourceData: callPayload }));
-    }
-  };
-
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  }, [isCallActive, callId, currentUser, firestore, setupStreams, hangUp]);
 
   useEffect(() => {
     if (localStream && localVideoRef.current) {
       localVideoRef.current.srcObject = localStream;
     }
-  }, [localStream]);
-  
-  useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = remoteStream;
     }
-  }, [remoteStream]);
-
+  }, [localStream, remoteStream]);
 
   const toggleMute = () => {
-    if (!localStream) return;
-    localStream.getAudioTracks().forEach(track => {
+    localStream?.getAudioTracks().forEach(track => {
       track.enabled = !track.enabled;
       setIsMuted(!track.enabled);
     });
   };
 
   const toggleVideo = () => {
-    if (!localStream) return;
-    localStream.getVideoTracks().forEach(track => {
+    localStream?.getVideoTracks().forEach(track => {
       track.enabled = !track.enabled;
       setIsVideoOff(!track.enabled);
     });
   };
+  
 
   if (isCallActive) {
     return (
         <div className="w-full h-full bg-gray-900 text-white flex flex-col p-4 gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
                 <Card className="bg-black/30 border-gray-700 relative overflow-hidden">
-                <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded-md text-xs">You</div>
+                    <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded-md text-xs">You</div>
                 </Card>
                 <Card className="bg-black/30 border-gray-700 relative overflow-hidden flex items-center justify-center">
-                    {remoteStream && remoteStream.getTracks().length > 0 ? (
-                        <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                    ) : (
+                    <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                    {!remoteStream?.active && (
                        <div className="text-center text-gray-400">
                            <Loader2 className="animate-spin h-8 w-8 mb-2" />
                            <p>Connecting...</p>
@@ -285,18 +309,16 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
                     <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded-md text-xs">Remote</div>
                 </Card>
             </div>
-            <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <Button onClick={toggleMute} variant="outline" size="icon" className={`rounded-full h-12 w-12 border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 ${isMuted ? 'text-red-500' : ''}`}>
-                        {isMuted ? <MicOff /> : <Mic />}
-                    </Button>
-                    <Button onClick={toggleVideo} variant="outline" size="icon" className={`rounded-full h-12 w-12 border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 ${isVideoOff ? 'text-red-500' : ''}`}>
-                        {isVideoOff ? <VideoOff /> : <VideoIcon />}
-                    </Button>
-                    <Button onClick={() => hangUp()} className="rounded-full h-14 w-14 bg-red-600 hover:bg-red-700 text-white">
-                        <PhoneOff />
-                    </Button>
-                </div>
+            <div className="flex justify-center items-center gap-4">
+                <Button onClick={toggleMute} variant="outline" size="icon" className={`rounded-full h-12 w-12 border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 ${isMuted ? 'text-red-500' : ''}`}>
+                    {isMuted ? <MicOff /> : <Mic />}
+                </Button>
+                <Button onClick={toggleVideo} variant="outline" size="icon" className={`rounded-full h-12 w-12 border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 ${isVideoOff ? 'text-red-500' : ''}`}>
+                    {isVideoOff ? <VideoOff /> : <VideoIcon />}
+                </Button>
+                <Button onClick={hangUp} className="rounded-full h-14 w-14 bg-red-600 hover:bg-red-700 text-white">
+                    <PhoneOff />
+                </Button>
             </div>
         </div>
     )

@@ -68,9 +68,14 @@ export default function Desktop() {
   const auth = useAuth();
 
   const handleResetDesktop = useCallback(() => {
+    windows.forEach(win => {
+        if (win.appId === 'videoCall') {
+            setCallDetails(prev => ({ ...prev, callId: null, isCallActive: false }));
+        }
+    });
     setWindows([]);
     setActiveWindowId(null);
-  }, []);
+  }, [windows]);
 
   const handleSignOut = async () => {
     await signOut(auth);
