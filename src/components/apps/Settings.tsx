@@ -401,7 +401,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Secure By Design</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        Security is not an afterthought. The system leverages Firebase Authentication for user management and Firestore Security Rules for data access control. The rules are written to enforce a strict user-ownership model: your data is your own. The `isOwner` function in the rules is a prime example, ensuring that a user can only ever access documents within their own data path (e.g., `/users/{userId}/...`). This path-based security is simple, powerful, and prevents data leaks between users.
+                                        Security is not an afterthought. The system leverages Firebase Authentication for user management and Firestore Security Rules for data access control. The rules are written to enforce a strict user-ownership model: your data is your own. The `isOwner` function in the rules is a prime example, ensuring that a user can only ever access documents within their own data path (e.g., `/users/{'{userId}'}/...`). This path-based security is simple, powerful, and prevents data leaks between users.
                                     </p>
                                 </div>
                             </div>
@@ -459,5 +459,3 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
     </div>
   );
 }
-
-    
