@@ -13,17 +13,13 @@ import {
   addDoc,
   serverTimestamp,
   doc,
-  setDoc,
   updateDoc,
   arrayUnion,
   arrayRemove,
   where,
-  getDocs,
   writeBatch,
-  deleteDoc,
 } from 'firebase/firestore';
-import { errorEmitter, FirestorePermissionError, type WithId } from '@/firebase';
-import { useToast } from '@/hooks/use-toast';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 interface UserProfile {
     id: string;
@@ -47,7 +43,6 @@ interface Post {
 export default function SocialMediaApp() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
   
   const [newPost, setNewPost] = useState('');
   const [activeTab, setActiveTab] = useState('home');
@@ -136,29 +131,29 @@ export default function SocialMediaApp() {
     setShowNewPost(false);
   };
 
-  const handleFollow = async (targetUserId: string) => {
+  const handleFollow = (targetUserId: string) => {
     if (!user || !firestore || !currentUserProfile) return;
 
     const currentUserRef = doc(firestore, 'users', user.uid);
     const targetUserRef = doc(firestore, 'users', targetUserId);
     
-    const isFollowing = currentUserProfile.following?.includes(targetUserId);
-
     const batch = writeBatch(firestore);
     
+    const isFollowing = currentUserProfile.following?.includes(targetUserId);
+
     if (isFollowing) {
+        // Unfollow
         batch.update(currentUserRef, { following: arrayRemove(targetUserId) });
         batch.update(targetUserRef, { followers: arrayRemove(user.uid) });
     } else {
+        // Follow
         batch.update(currentUserRef, { following: arrayUnion(targetUserId) });
         batch.update(targetUserRef, { followers: arrayUnion(user.uid) });
     }
 
-    try {
-        await batch.commit();
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not follow user.'})
-    }
+    batch.commit().catch(error => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'batch-write', operation: 'write', requestResourceData: { user: currentUserRef.path, target: targetUserRef.path } }));
+    });
   };
   
   const handleSaveProfile = async () => {
@@ -255,9 +250,9 @@ export default function SocialMediaApp() {
                   className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
                 >
                   <Heart
-                    className={`w-5 h-5 ${post.likedBy.includes(user!.uid) ? 'fill-red-500 text-red-500' : ''}`}
+                    className={`w-5 h-5 ${user && post.likedBy.includes(user.uid) ? 'fill-red-500 text-red-500' : ''}`}
                   />
-                  <span className={post.likedBy.includes(user!.uid) ? 'text-red-500' : ''}>{post.likedBy.length}</span>
+                  <span className={user && post.likedBy.includes(user.uid) ? 'text-red-500' : ''}>{post.likedBy.length}</span>
                 </button>
                 <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
                   <MessageCircle className="w-5 h-5" />
@@ -410,8 +405,8 @@ export default function SocialMediaApp() {
                     onClick={() => handleLike(post.id)}
                     className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
                   >
-                    <Heart className={`w-5 h-5 ${post.likedBy.includes(user!.uid) ? 'fill-red-500 text-red-500' : ''}`} />
-                    <span className={post.likedBy.includes(user!.uid) ? 'text-red-500' : ''}>{post.likedBy.length}</span>
+                    <Heart className={`w-5 h-5 ${user && post.likedBy.includes(user.uid) ? 'fill-red-500 text-red-500' : ''}`} />
+                    <span className={user && post.likedBy.includes(user.uid) ? 'text-red-500' : ''}>{post.likedBy.length}</span>
                   </button>
                   <button className="flex items-center gap-2 text-gray-600 hover:text-blue-500">
                     <MessageCircle className="w-5 h-5" />
@@ -509,4 +504,5 @@ export default function SocialMediaApp() {
     </div>
   );
 }
+
     
