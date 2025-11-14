@@ -54,7 +54,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
   const pc = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const callListenerUnsubscribe = useRef<() => void | null>();
+  const callListenerUnsubscribe = useRef<() => void | undefined>();
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -73,6 +73,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         localVideoRef.current.srcObject = stream;
       }
       setLocalStream(stream);
+      setRemoteStream(new MediaStream()); // Initialize remote stream early
       return stream;
     } catch (error) {
       console.error("Error accessing media devices.", error);
@@ -118,27 +119,42 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
 
     if (callId && firestore) {
       const callDocRef = doc(firestore, 'calls', callId);
-      const callSnapshot = await getDoc(callDocRef);
-      if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
-          await updateDoc(callDocRef, { status: 'ended' }).catch(err => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: callDocRef.path,
-                operation: 'update',
-                requestResourceData: { status: 'ended' },
-            }));
-          });
-      }
+      getDoc(callDocRef).then(callSnapshot => {
+        if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
+            const updatePayload = { status: 'ended' };
+            updateDoc(callDocRef, updatePayload).catch(err => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: callDocRef.path,
+                  operation: 'update',
+                  requestResourceData: updatePayload,
+              }));
+            });
+        }
+      });
+      
       // Clean up old ended calls
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const q = query(collection(firestore, 'calls'), where('status', '==', 'ended'), where('createdAt', '<', fiveMinutesAgo));
-      const oldCalls = await getDocs(q);
-      const batch = writeBatch(firestore);
-      oldCalls.forEach(doc => {
-          batch.delete(doc.ref);
+      getDocs(q).then(oldCalls => {
+        if (!oldCalls.empty) {
+          const batch = writeBatch(firestore);
+          oldCalls.forEach(doc => {
+              batch.delete(doc.ref);
+          });
+          batch.commit().catch(err => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: 'calls',
+                  operation: 'delete',
+                  requestResourceData: { note: `Batch delete of ${oldCalls.size} old call documents.` }
+              }));
+          });
+        }
+      }).catch(err => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: `calls`,
+          operation: 'list',
+        }));
       });
-      if(!oldCalls.empty) {
-        await batch.commit();
-      }
     }
     
     setCallDetails({ callId: null, isCallActive: false });
@@ -152,6 +168,21 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
     
     setCallDetails({ callId: null, isCallActive: true });
     
+    pc.current = new RTCPeerConnection(servers);
+
+    stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
+
+    if (!remoteStream) {
+        const newRemoteStream = new MediaStream();
+        setRemoteStream(newRemoteStream);
+    }
+    
+    pc.current.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(track => {
+            remoteStream?.addTrack(track);
+        });
+    };
+
     const callCollectionRef = collection(firestore, 'calls');
     const callPayload = {
         callerId: currentUser.uid,
@@ -162,9 +193,59 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         createdAt: serverTimestamp(),
     };
     
-    let callDocRef;
     try {
-        callDocRef = await addDoc(callCollectionRef, callPayload);
+        const callDocRef = await addDoc(callCollectionRef, callPayload);
+        setCallDetails({ callId: callDocRef.id, isCallActive: true });
+        
+        const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
+        if (pc.current) {
+            pc.current.onicecandidate = event => {
+              if (event.candidate) {
+                addDoc(callerCandidatesCollection, event.candidate.toJSON()).catch(err => {
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: callerCandidatesCollection.path,
+                        operation: 'create',
+                        requestResourceData: event.candidate.toJSON(),
+                    }));
+                });
+              }
+            };
+        }
+
+        const offerDescription = await pc.current.createOffer();
+        await pc.current.setLocalDescription(offerDescription);
+
+        const offer = { type: offerDescription.type, sdp: offerDescription.sdp };
+        const updatePayload = { offer, status: 'ringing' };
+        await updateDoc(callDocRef, updatePayload).catch(err => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: callDocRef.path,
+                operation: 'update',
+                requestResourceData: updatePayload,
+            }));
+        });
+
+        callListenerUnsubscribe.current = onSnapshot(callDocRef, (snapshot) => {
+          const data = snapshot.data();
+          if (!pc.current?.currentRemoteDescription && data?.answer) {
+            const answerDescription = new RTCSessionDescription(data.answer);
+            pc.current.setRemoteDescription(answerDescription);
+          }
+          if (data?.status === 'ended' || data?.status === 'rejected') {
+            hangUp();
+          }
+        });
+
+        const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
+        onSnapshot(calleeCandidatesCollection, snapshot => {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added' && pc.current?.connectionState !== "closed") {
+              const candidate = new RTCIceCandidate(change.doc.data());
+              pc.current?.addIceCandidate(candidate);
+            }
+          });
+        });
+
     } catch (err) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: callCollectionRef.path,
@@ -174,74 +255,10 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         hangUp();
         return;
     }
-
-    setCallDetails({ callId: callDocRef.id, isCallActive: true });
-    
-    pc.current = new RTCPeerConnection(servers);
-
-    stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
-
-    const remote = new MediaStream();
-    setRemoteStream(remote);
-
-    pc.current.ontrack = (event) => {
-      event.streams[0].getTracks().forEach(track => {
-        remote.addTrack(track);
-      });
-    };
-    
-    const callerCandidatesCollection = collection(callDocRef, 'callerCandidates');
-    pc.current.onicecandidate = event => {
-      if (event.candidate) {
-        addDoc(callerCandidatesCollection, event.candidate.toJSON()).catch(err => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: callerCandidatesCollection.path,
-                operation: 'create',
-                requestResourceData: event.candidate.toJSON(),
-            }));
-        });
-      }
-    };
-
-    const offerDescription = await pc.current.createOffer();
-    await pc.current.setLocalDescription(offerDescription);
-
-    const offer = { type: offerDescription.type, sdp: offerDescription.sdp };
-    const updatePayload = { offer, status: 'ringing' };
-    await updateDoc(callDocRef, updatePayload).catch(err => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: callDocRef.path,
-            operation: 'update',
-            requestResourceData: updatePayload,
-        }));
-    });
-
-    callListenerUnsubscribe.current = onSnapshot(callDocRef, (snapshot) => {
-      const data = snapshot.data();
-      if (!pc.current) return;
-      if (!pc.current.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc.current.setRemoteDescription(answerDescription);
-      }
-      if (data?.status === 'ended' || data?.status === 'rejected') {
-        hangUp();
-      }
-    });
-
-    const calleeCandidatesCollection = collection(callDocRef, 'calleeCandidates');
-    onSnapshot(calleeCandidatesCollection, snapshot => {
-      snapshot.docChanges().forEach(change => {
-        if (change.type === 'added' && pc.current?.connectionState !== "closed") {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.current?.addIceCandidate(candidate);
-        }
-      });
-    });
   };
   
-  // This effect handles the 'callee' side
   useEffect(() => {
-    if (!isCallActive || !callId || !currentUser || !firestore) return;
+    if (!isCallActive || !callId || !currentUser || !firestore || pc.current) return;
 
     const answerCall = async () => {
         const stream = await setupStreams();
@@ -251,16 +268,24 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         };
 
         const callDocRef = doc(firestore, 'calls', callId);
+        
+        const callSnapshot = await getDoc(callDocRef);
+        if (!callSnapshot.exists() || callSnapshot.data().calleeId !== currentUser.uid) {
+            return; // Not the callee or call doesn't exist.
+        }
+
         pc.current = new RTCPeerConnection(servers);
 
         stream.getTracks().forEach(track => pc.current?.addTrack(track, stream));
 
-        const remote = new MediaStream();
-        setRemoteStream(remote);
+        if (!remoteStream) {
+            const newRemoteStream = new MediaStream();
+            setRemoteStream(newRemoteStream);
+        }
 
         pc.current.ontrack = (event) => {
             event.streams[0].getTracks().forEach(track => {
-                remote.addTrack(track);
+                remoteStream?.addTrack(track);
             });
         };
 
@@ -277,25 +302,22 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
             }
         };
 
-        const callSnapshot = await getDoc(callDocRef);
-        if (callSnapshot.exists()) {
-            const callData = callSnapshot.data();
-            if(callData.offer) {
-                await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
+        const callData = callSnapshot.data();
+        if(callData.offer) {
+            await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
 
-                const answerDescription = await pc.current.createAnswer();
-                await pc.current.setLocalDescription(answerDescription);
+            const answerDescription = await pc.current.createAnswer();
+            await pc.current.setLocalDescription(answerDescription);
 
-                const answer = { type: answerDescription.type, sdp: answerDescription.sdp };
-                const updatePayload = { answer, status: 'answered' };
-                await updateDoc(callDocRef, updatePayload).catch(err => {
-                    errorEmitter.emit('permission-error', new FirestorePermissionError({
-                        path: callDocRef.path,
-                        operation: 'update',
-                        requestResourceData: updatePayload,
-                    }));
-                });
-            }
+            const answer = { type: answerDescription.type, sdp: answerDescription.sdp };
+            const updatePayload = { answer, status: 'answered' };
+            await updateDoc(callDocRef, updatePayload).catch(err => {
+                errorEmitter.emit('permission-error', new FirestorePermissionError({
+                    path: callDocRef.path,
+                    operation: 'update',
+                    requestResourceData: updatePayload,
+                }));
+            });
         }
 
         onSnapshot(collection(callDocRef, 'callerCandidates'), snapshot => {
@@ -314,15 +336,9 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         });
     };
     
-    // Only run answer logic if we are the callee
-    const callDocRef = doc(firestore, 'calls', callId);
-    getDoc(callDocRef).then(snapshot => {
-      if (snapshot.exists() && snapshot.data().calleeId === currentUser.uid && !pc.current) {
-        answerCall();
-      }
-    });
+    answerCall();
 
-  }, [isCallActive, callId, currentUser, firestore, setupStreams, hangUp]);
+  }, [isCallActive, callId, currentUser, firestore, setupStreams, hangUp, remoteStream]);
 
 
   const toggleMute = () => {
@@ -347,7 +363,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
                 <Card className="bg-black/30 border-gray-700 relative overflow-hidden">
                     <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                      {!localStream && (
-                       <div className="absolute inset-0 flex items-center justify-center text-center text-gray-400">
+                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-400">
                            <Loader2 className="animate-spin h-8 w-8 mb-2" />
                            <p>Starting camera...</p>
                        </div>
@@ -357,7 +373,7 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
                 <Card className="bg-black/30 border-gray-700 relative overflow-hidden flex items-center justify-center">
                     <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                     {!remoteStream?.active && (
-                       <div className="absolute inset-0 flex items-center justify-center text-center text-gray-400">
+                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-400">
                            <Loader2 className="animate-spin h-8 w-8 mb-2" />
                            <p>Connecting...</p>
                        </div>
