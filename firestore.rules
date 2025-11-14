@@ -134,6 +134,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /**
+     * @description Manages access to music tracks.
+     * @path /tracks/{trackId}
+     */
+    match /tracks/{trackId} {
+      // Any authenticated user can read the public playlist and add new tracks.
+      allow read, list, create: if request.auth != null;
+      
+      // Only allow updates/deletes for a potential admin role in the future.
+      allow update, delete: if false;
+    }
 
     /**
      * @description Manages access to application data for a specific user.

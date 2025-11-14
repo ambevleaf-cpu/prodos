@@ -372,6 +372,20 @@
         "timestamp": { "type": "string", "format": "date-time", "description": "The timestamp when the message was sent." }
       },
       "required": ["conversationId", "senderId", "text", "timestamp"]
+    },
+    "Track": {
+      "title": "Track",
+      "description": "Represents a music track in the playlist.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the track." },
+        "title": { "type": "string", "description": "The title of the track." },
+        "artist": { "type": "string", "description": "The artist of the track." },
+        "url": { "type": "string", "format": "uri", "description": "URL of the audio file." },
+        "coverArt": { "type": "string", "format": "uri", "description": "URL of the cover art image." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the track was added." }
+      },
+      "required": ["title", "artist", "url", "coverArt", "createdAt"]
     }
   },
   "auth": {
@@ -576,9 +590,17 @@
             }
           ]
         }
+      },
+      {
+        "path": "/tracks/{trackId}",
+        "definition": {
+          "entityName": "Track",
+          "schema": { "$ref": "#/backend/entities/Track" },
+          "description": "Stores music track metadata. This is a public collection that any authenticated user can read from and write to.",
+          "params": [{ "name": "trackId", "description": "The ID of the track." }]
+        }
       }
     ],
     "reasoning": "The Firestore structure is designed to follow best practices for security, scalability, and debuggability, focusing on Authorization Independence and clear data ownership.  The core strategy is to leverage path-based ownership for user-specific data and to avoid `get()` calls in security rules by denormalizing authorization context when needed.\\n\\n*   **Users Collection:** A new top-level `users` collection is added to store public user profile data. Each user can manage their own profile document.\\n*   **Posts Collection:** A new top-level `posts` collection is added. This is a public collection, readable by any authenticated user. Write access is restricted to the post owner.\\n*   **Hierarchical Data:** The structure reflects the relationships between entities.  For example, `ApplicationWindows` are stored as subcollections of `Applications` which are under `users`. Similarly, `Files` are stored as subcollections under `Directories`, forming a filesystem-like hierarchy.\\n*   **Authorization Independence:** Path-based ownership (`/users/{userId}/...`) inherently provides authorization independence. Security rules can easily validate `request.auth.uid == userId` without needing to read any data. No denormalization is needed here.\\n*   **QAPs:** Path-based ownership ensures secure `list` operations. Rules can limit list access to the currently authenticated user's data. The principle of Structural Segregation (Homogeneous Security Posture) also supports QAPs by ensuring that each collection has clear and consistent security needs.\\n"
   }
 }
-    

@@ -144,13 +144,42 @@ export default function MusicPlayer({ playlist, addTrack }: MusicPlayerProps) {
     setIsAddSongOpen(false);
   };
 
-  if (!currentTrack) {
+  if (!playlist || playlist.length === 0) {
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-purple-900/50 text-white rounded-b-lg overflow-hidden">
             <h2 className="text-2xl font-bold mb-4">No songs in playlist</h2>
             <Button onClick={() => setIsAddSongOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Add a Song
             </Button>
+            <Dialog open={isAddSongOpen} onOpenChange={setIsAddSongOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Add a New Song</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
+                            <Input id="title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Song Title" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="artist">Artist</Label>
+                            <Input id="artist" value={newArtist} onChange={(e) => setNewArtist(e.target.value)} placeholder="Artist Name" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="url">Song URL (.mp3)</Label>
+                            <Input id="url" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://example.com/song.mp3" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="coverArt">Cover Art URL</Label>
+                            <Input id="coverArt" value={newCoverArt} onChange={(e) => setNewCoverArt(e.target.value)} placeholder="https://example.com/cover.jpg" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddSongOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddSong}>Add Song</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
   }
