@@ -24,7 +24,7 @@ import type { Task } from '@/lib/types';
 import AnimatedWallpaper from './AnimatedWallpaper';
 import { useAuth, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 
 export interface WindowInstance {
@@ -81,7 +81,7 @@ export default function Desktop() {
   const [isCallActive, setIsCallActive] = useState(false);
 
   useEffect(() => {
-    const peerConnection = new RTCPeerConnection(servers);
+    let peerConnection: RTCPeerConnection | null = new RTCPeerConnection(servers);
     setPc(peerConnection);
 
     peerConnection.ontrack = (event) => {
@@ -92,29 +92,27 @@ export default function Desktop() {
         setRemoteStream(remote);
     };
 
+    const setup = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        stream.getTracks().forEach((track) => {
+          peerConnection?.addTrack(track, stream);
+        });
+      } catch(error) {
+        console.error("Error accessing media devices.", error);
+      }
+    };
+    
+    setup();
+
     return () => {
-        peerConnection.close();
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
     }
   }, []);
-
-  useEffect(() => {
-      const setup = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          setLocalStream(stream);
-
-          stream.getTracks().forEach((track) => {
-            pc?.addTrack(track, stream);
-          });
-        } catch(error) {
-          console.error("Error accessing media devices.", error);
-        }
-      }
-      if (pc && !localStream) {
-        setup();
-      }
-  }, [pc, localStream]);
-
 
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
