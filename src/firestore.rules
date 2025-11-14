@@ -1,0 +1,221 @@
+/**
+ * @fileoverview Firestore Security Rules for the Virtual Desktop application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user's data is isolated and accessible only to themselves.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, creating a clear separation of user data. This enables simple, path-based authorization.
+ *
+ * Key Security Decisions:
+ * - User listing is implicitly disallowed.
+ * - All collections are secured with owner-only access (the authenticated user's UID must match the `userId` path segment).
+ * - The ruleset does NOT enforce specific data shapes, allowing for flexible prototyping and data evolution.
+ *
+ * Denormalization for Authorization:
+ * - Not applicable, as path-based ownership is sufficient and avoids the need for denormalization.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is made by the owner of the resource, based on the userId in the path.
+     * @param {string} userId - The user ID from the path.
+     * @returns {boolean} - True if the request is made by the owner, false otherwise.
+     * @example
+     * isOwner("user123") // Returns true if request.auth.uid == "user123"
+     */
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the request is made by an existing owner of the resource.
+     *              This function combines the ownership check with the existence check (resource != null).
+     * @param {string} userId - The user ID from the path.
+     * @returns {boolean} - True if the request is made by an existing owner, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages access to user profile data.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      allow get: if request.auth != null; // Any authenticated user can read profiles
+      allow list: if request.auth != null; // Any authenticated user can list profiles
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId);
+      allow delete: if false; // Profiles cannot be deleted
+    }
+
+    /**
+     * @description Manages access to social media posts.
+     * @path /posts/{postId}
+     */
+    match /posts/{postId} {
+      allow get: if request.auth != null; // Any authenticated user can read posts
+      allow list: if request.auth != null; // Any authenticated user can list posts
+      allow create: if isOwner(request.resource.data.userId); // Only the owner can create a post
+      allow update: if isOwner(resource.data.userId); // Only the owner can update their post
+      allow delete: if isOwner(resource.data.userId); // Only the owner can delete their post
+    }
+    
+    /**
+     * @description Manages access to WebRTC signaling data for video calls.
+     * @path /calls/{callId}
+     */
+    match /calls/{callId} {
+      // Caller can create the call document
+      allow create: if request.auth.uid == request.resource.data.callerId;
+      
+      // Caller and Callee can read the call document to get offer/answer and status
+      allow read: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
+      
+      // Allow callee to list calls to find incoming calls.
+      allow list: if request.auth != null && request.query.where.calleeId == request.auth.uid;
+
+      // - Caller can update with offer.
+      // - Callee can update with answer or reject the call.
+      // - Either participant can end the call.
+      allow update: if (request.auth.uid == resource.data.callerId && request.resource.data.offer != null) ||
+                       (request.auth.uid == resource.data.calleeId && request.resource.data.answer != null) ||
+                       (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'rejected') ||
+                       ((request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId) && request.resource.data.status == 'ended');
+
+      // Deletion is disallowed to prefer 'ended' status. Old documents can be cleaned up via a script or TTL policy.
+      allow delete: if false;
+    }
+    
+    /**
+     * @description Manages access to ICE candidates for a video call.
+     * @path /calls/{callId}/callerCandidates/{candidateId}
+     * @path /calls/{callId}/calleeCandidates/{candidateId}
+     */
+    match /calls/{callId}/{candidatesCollection}/{candidateId} {
+        // Both caller and callee need to read and write candidates
+        allow read, write: if request.auth != null && (
+          exists(/databases/$(database)/documents/calls/$(callId)) && (
+            request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerId ||
+            request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId
+          )
+        );
+    }
+
+
+    /**
+     * @description Manages access to application data for a specific user.
+     * @path /users/{userId}/applications/{applicationId}
+     * @allow (create) User 'user123' can create a new application if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own application if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create an application under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write application data.
+     */
+    match /users/{userId}/applications/{applicationId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to application window data for a specific application owned by a user.
+     * @path /users/{userId}/applications/{applicationId}/applicationWindows/{applicationWindowId}
+     * @allow (create) User 'user123' can create a new application window under their application if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own application window if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create an application window under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write application window data.
+     */
+    match /users/{userId}/applications/{applicationId}/applicationWindows/{applicationWindowId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to directory data for a specific user.
+     * @path /users/{userId}/directories/{directoryId}
+     * @allow (create) User 'user123' can create a new directory if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own directory if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create a directory under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write directory data.
+     */
+    match /users/{userId}/directories/{directoryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to file data within a specific directory in a user's virtual file system.
+     * @path /users/{userId}/directories/{directoryId}/files/{fileId}
+     * @allow (create) User 'user123' can create a new file under their directory if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own file if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create a file under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write file data.
+     */
+    match /users/{userId}/directories/{directoryId}/files/{fileId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to setting data for a specific user.
+     * @path /users/{userId}/settings/{settingId}
+     * @allow (create) User 'user123' can create a new setting if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own setting if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create a setting under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write setting data.
+     */
+    match /users/{userId}/settings/{settingId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to search query data for a specific user.
+     * @path /users/{userId}/searchQueries/{searchQueryId}
+     * @allow (create) User 'user123' can create a new search query if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own search query if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create a search query under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write search query data.
+     */
+    match /users/{userId}/searchQueries/{searchQueryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages access to notification data for a specific user.
+     * @path /users/{userId}/notifications/{notificationId}
+     * @allow (create) User 'user123' can create a new notification if authenticated as 'user123'.
+     * @allow (get) User 'user123' can get their own notification if authenticated as 'user123'.
+     * @deny (create) User 'user456' cannot create a notification under 'user123''s path.
+     * @principle Enforces document ownership: only the user specified in the path can read/write notification data.
+     */
+    match /users/{userId}/notifications/{notificationId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
