@@ -5,8 +5,6 @@ import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@
 import { collection, query, where, onSnapshot, doc, updateDoc, getDoc, addDoc } from 'firebase/firestore';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,

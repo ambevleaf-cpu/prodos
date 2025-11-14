@@ -73,12 +73,12 @@ service cloud.firestore {
       allow create: if request.auth.uid == request.resource.data.callerId;
       
       // Caller and Callee can read the call document
-      allow get: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
+      allow read: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
       
-      // Callee can listen for incoming calls for themselves
-      allow list: if request.auth.uid == request.query.where.calleeId;
+      // Caller and Callee can list their own calls
+      allow list: if request.auth.uid == request.query.get("callerId") || request.auth.uid == request.query.get("calleeId");
 
-      // Caller can update with offer, callee can update with answer
+      // Caller can update with offer, callee can update with answer or status
       allow update: if (request.auth.uid == resource.data.callerId && request.resource.data.offer != null) ||
                        (request.auth.uid == resource.data.calleeId && request.resource.data.answer != null) ||
                        (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'rejected') ||
@@ -215,4 +215,3 @@ service cloud.firestore {
     }
   }
 }
-    
