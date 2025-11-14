@@ -228,7 +228,7 @@ export default function MessagesApp() {
         {/* Header */}
         <div className="bg-[#008069] text-white p-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold">WhatsApp</h1>
+            <h1 className="text-xl font-semibold">Messenger</h1>
             <div className="flex gap-6">
               <Users className="w-6 h-6 cursor-pointer hover:opacity-80" />
               <MessageCircle className="w-6 h-6 cursor-pointer hover:opacity-80" />
