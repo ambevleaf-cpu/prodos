@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import TopBar from './TopBar';
 import Dock from './Dock';
 import Window from './Window';
@@ -18,11 +18,13 @@ import TaskManager from '../apps/TaskManager';
 import SocialMediaApp from '../apps/SocialMedia';
 import VideoCallApp from '../apps/VideoCall';
 import TaskListWidget from './TaskListWidget';
+import IncomingCallManager from './IncomingCallManager';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
 import type { Task } from '@/lib/types';
 import AnimatedWallpaper from './AnimatedWallpaper';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 
 
 export interface WindowInstance {
@@ -53,6 +55,15 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   videoCall: VideoCallApp,
 };
 
+const servers = {
+  iceServers: [
+    {
+      urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
 
 export default function Desktop() {
   const [windows, setWindows] = useState<WindowInstance[]>([]);
@@ -62,10 +73,54 @@ export default function Desktop() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [useAnimatedWallpaper, setUseAnimatedWallpaper] = useState(true);
 
+  // Video Call State
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [pc, setPc] = useState<RTCPeerConnection | null>(null);
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [isCallActive, setIsCallActive] = useState(false);
+
+  useEffect(() => {
+    const peerConnection = new RTCPeerConnection(servers);
+    setPc(peerConnection);
+
+    peerConnection.ontrack = (event) => {
+        const remote = new MediaStream();
+        event.streams[0].getTracks().forEach((track) => {
+          remote.addTrack(track);
+        });
+        setRemoteStream(remote);
+    };
+
+    return () => {
+        peerConnection.close();
+    }
+  }, []);
+
+  useEffect(() => {
+      const setup = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          setLocalStream(stream);
+
+          stream.getTracks().forEach((track) => {
+            pc?.addTrack(track, stream);
+          });
+        } catch(error) {
+          console.error("Error accessing media devices.", error);
+        }
+      }
+      if (pc && !localStream) {
+        setup();
+      }
+  }, [pc, localStream]);
+
+
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const handleResetDesktop = useCallback(() => {
     setWindows([]);
@@ -168,11 +223,21 @@ export default function Desktop() {
   }, [windows, nextZIndex]);
 
   const closeWindow = useCallback((windowId: string) => {
+    const win = windows.find(w => w.id === windowId);
+    if (win?.appId === 'videoCall') {
+      // If it's the video call app, we might need to hang up
+       if (isCallActive && activeCallId) {
+            const callDoc = doc(firestore, 'calls', activeCallId);
+            updateDoc(callDoc, { status: 'ended' });
+        }
+        setIsCallActive(false);
+        setActiveCallId(null);
+    }
     setWindows(prev => prev.filter(w => w.id !== windowId));
     if (activeWindowId === windowId) {
       setActiveWindowId(null);
     }
-  }, [activeWindowId]);
+  }, [activeWindowId, windows, isCallActive, activeCallId, firestore]);
 
   const minimizeWindow = useCallback((windowId: string) => {
     setWindows(prev => prev.map(w => w.id === windowId ? { ...w, isMinimized: true } : w));
@@ -244,6 +309,27 @@ export default function Desktop() {
 
   const openWindows = windows.filter(w => !w.isMinimized);
 
+  const hangUp = async () => {
+    if (pc) {
+      pc.close();
+    }
+    
+    setLocalStream(null);
+    setRemoteStream(null);
+    setPc(new RTCPeerConnection(servers)); // Reset peer connection
+    setIsCallActive(false);
+
+    if (activeCallId) {
+        const callDoc = doc(firestore, 'calls', activeCallId);
+        const callSnapshot = await getDoc(callDoc);
+        if (callSnapshot.exists() && callSnapshot.data().status !== 'ended') {
+            await updateDoc(callDoc, { status: 'ended' });
+        }
+    }
+    
+    setActiveCallId(null);
+  };
+
   return (
     <div
       ref={desktopRef}
@@ -259,6 +345,13 @@ export default function Desktop() {
       <TopBar onReset={handleResetDesktop} />
       <div className="flex-grow relative" ref={desktopRef}>
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
+        <IncomingCallManager
+            pc={pc}
+            setRemoteStream={setRemoteStream}
+            setActiveCallId={setActiveCallId}
+            setIsCallActive={setIsCallActive}
+            openVideoCallApp={() => openApp('videoCall')}
+        />
         {openWindows.map(win => {
           const AppComponent = appComponentMap[win.appId];
           const appProps: { [key: string]: any } = {};
@@ -282,6 +375,16 @@ export default function Desktop() {
             appProps.deleteTask = deleteTask;
             appProps.toggleTask = toggleTask;
             appProps.toggleStar = toggleStar;
+          }
+          if (win.appId === 'videoCall') {
+            appProps.callId = activeCallId;
+            appProps.setCallId = setActiveCallId;
+            appProps.isCallActive = isCallActive;
+            appProps.setIsCallActive = setIsCallActive;
+            appProps.hangUp = hangUp;
+            appProps.localStream = localStream;
+            appProps.remoteStream = remoteStream;
+            appProps.pc = pc;
           }
 
           return (

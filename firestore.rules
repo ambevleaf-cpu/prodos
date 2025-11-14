@@ -69,10 +69,21 @@ service cloud.firestore {
      * @path /calls/{callId}
      */
     match /calls/{callId} {
-      // Any authenticated user can create, read, and update call documents.
-      // This is a permissive rule for prototyping. In a production scenario,
-      // you would restrict access to only the participants of the call.
-      allow read, write: if request.auth != null;
+      // Caller can create the call document
+      allow create: if request.auth.uid == request.resource.data.callerId;
+      
+      // Caller and Callee can read the call document
+      allow get: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
+      
+      // Callee can listen for incoming calls
+      allow list: if request.auth.uid == request.resource.data.calleeId;
+
+      // Caller can update with offer, callee can update with answer
+      allow update: if (request.auth.uid == resource.data.callerId && request.resource.data.offer != null) ||
+                       (request.auth.uid == resource.data.calleeId && request.resource.data.answer != null) ||
+                       (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'rejected') ||
+                       (request.auth.uid == resource.data.callerId && request.resource.data.status == 'ended') ||
+                       (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'ended');
     }
     
     /**
@@ -81,7 +92,13 @@ service cloud.firestore {
      * @path /calls/{callId}/calleeCandidates/{candidateId}
      */
     match /calls/{callId}/{candidatesCollection}/{candidateId} {
-        allow read, write: if request.auth != null;
+        // Both caller and callee need to read and write candidates
+        allow read, write: if request.auth != null && (
+          exists(/databases/$(database)/documents/calls/$(callId)) && (
+            request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerId ||
+            request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.calleeId
+          )
+        );
     }
 
 

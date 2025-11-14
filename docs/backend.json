@@ -317,6 +317,15 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Unique identifier for the video call session." },
+        "callerId": { "type": "string", "description": "The UID of the user who initiated the call." },
+        "callerName": { "type": "string", "description": "The name of the user who initiated the call." },
+        "calleeId": { "type": "string", "description": "The UID of the user who is being called." },
+        "calleeName": { "type": "string", "description": "The name of the user who is being called." },
+        "status": {
+            "type": "string",
+            "enum": ["offering", "ringing", "answered", "rejected", "ended"],
+            "description": "The current status of the call."
+        },
         "offer": {
           "type": "object",
           "properties": {
@@ -334,8 +343,10 @@
           },
           "required": ["type", "sdp"],
           "description": "The SDP answer from the callee."
-        }
-      }
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the call was created." }
+      },
+      "required": ["callerId", "calleeId", "status"]
     }
   },
   "auth": {
