@@ -41,6 +41,30 @@ service cloud.firestore {
     }
 
     /**
+     * @description Manages access to user profile data.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      allow get: if request.auth != null; // Any authenticated user can read profiles
+      allow list: if request.auth != null; // Any authenticated user can list profiles
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId);
+      allow delete: if false; // Profiles cannot be deleted
+    }
+
+    /**
+     * @description Manages access to social media posts.
+     * @path /posts/{postId}
+     */
+    match /posts/{postId} {
+      allow get: if request.auth != null; // Any authenticated user can read posts
+      allow list: if request.auth != null; // Any authenticated user can list posts
+      allow create: if isOwner(request.resource.data.userId); // Only the owner can create a post
+      allow update: if isOwner(resource.data.userId); // Only the owner can update their post
+      allow delete: if isOwner(resource.data.userId); // Only the owner can delete their post
+    }
+
+    /**
      * @description Manages access to application data for a specific user.
      * @path /users/{userId}/applications/{applicationId}
      * @allow (create) User 'user123' can create a new application if authenticated as 'user123'.
@@ -153,3 +177,4 @@ service cloud.firestore {
     }
   }
 }
+    
