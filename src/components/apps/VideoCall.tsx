@@ -106,24 +106,26 @@ export default function VideoCallApp({ callDetails, setCallDetails }: VideoCallA
         };
 
         try {
-            const callData = (await getDoc(callDocRef)).data();
+            const callSnapshot = await getDoc(callDocRef);
+            const callData = callSnapshot.data();
+
             if (callData?.offer) {
                 await pc.current.setRemoteDescription(new RTCSessionDescription(callData.offer));
+                
+                const answerDescription = await pc.current.createAnswer();
+                await pc.current.setLocalDescription(answerDescription);
+
+                const answerPayload = { type: answerDescription.type, sdp: answerDescription.sdp };
+                await updateDoc(callDocRef, { answer: answerPayload, status: 'answered' });
+
+                onSnapshot(offerCandidates, (snapshot) => {
+                  snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                      pc.current?.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+                    }
+                  });
+                });
             }
-            
-            const answerDescription = await pc.current.createAnswer();
-            await pc.current.setLocalDescription(answerDescription);
-
-            const answerPayload = { type: answerDescription.type, sdp: answerDescription.sdp };
-            await updateDoc(callDocRef, { answer: answerPayload, status: 'answered' });
-
-            onSnapshot(offerCandidates, (snapshot) => {
-              snapshot.docChanges().forEach((change) => {
-                if (change.type === 'added') {
-                  pc.current?.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-                }
-              });
-            });
         } catch (err) {
             console.error("Error during call answer:", err);
         }
