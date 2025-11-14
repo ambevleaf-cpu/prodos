@@ -154,8 +154,15 @@ export default function MessagesApp() {
     if (users) {
       users.forEach(u => participantData[u.id] = u);
     }
+    if (currentUser) {
+        // Add current user to the map as well, for cases where we need their profile
+        const currentUserProfile = users?.find(u => u.id === currentUser.uid);
+        if(currentUserProfile) {
+            participantData[currentUser.uid] = currentUserProfile;
+        }
+    }
     return participantData;
-  }, [users]);
+  }, [users, currentUser]);
   
   const getOtherParticipant = (participants: string[]) => {
       if(!currentUser) return null;
