@@ -30,6 +30,7 @@ interface UserProfile {
 }
 
 interface Post {
+    id: string; // Added id for keying
     userId: string;
     userName: string;
     userUsername: string;
@@ -137,7 +138,7 @@ export default function SocialMediaApp() {
   }, [user, profileLoading, currentUserProfile, firestore]);
 
   const handleLike = async (postId: string) => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || !currentUserProfile) return;
     const postDoc = doc(firestore, 'posts', postId);
     const post = posts?.find(p => p.id === postId);
     if (!post) return;
@@ -148,12 +149,31 @@ export default function SocialMediaApp() {
     updateDoc(postDoc, { likedBy: updatedLikedBy }).catch(error => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({ path: postDoc.path, operation: 'update', requestResourceData: { likedBy: '...' } }));
     });
+
+    // Send notification if not unliking and not liking your own post
+    if (!isLiked && post.userId !== user.uid) {
+        const notificationCol = collection(firestore, 'users', post.userId, 'notifications');
+        const notificationPayload = {
+            applicationId: 'socialMedia',
+            title: `${currentUserProfile.name || 'Someone'} liked your post`,
+            message: `"${post.content.substring(0, 30)}${post.content.length > 30 ? '...' : ''}"`,
+            timestamp: serverTimestamp(),
+            isRead: false,
+        };
+        addDoc(notificationCol, notificationPayload).catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: notificationCol.path,
+                operation: 'create',
+                requestResourceData: notificationPayload
+            }));
+        });
+    }
   };
 
   const handleCreatePost = async () => {
     if (!newPost.trim() || !user || !firestore || !currentUserProfile) return;
 
-    const postPayload: Post = {
+    const postPayload: Omit<Post, 'id'> = {
       userId: user.uid,
       userName: currentUserProfile.name,
       userUsername: currentUserProfile.username,
