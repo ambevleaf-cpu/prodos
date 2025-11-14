@@ -105,15 +105,15 @@ export default function Desktop() {
     setUseAnimatedWallpaper(false);
   }, []);
 
-  const addPhotoToGallery = useCallback((photoDataUrl: string) => {
-    const newPhoto: GalleryPhoto = {
-      id: `photo-${Date.now()}`,
-      url: photoDataUrl,
+  const addItemToGallery = useCallback((dataUrl: string, type: 'photo' | 'video') => {
+    const newItem: GalleryPhoto = {
+      id: `${type}-${Date.now()}`,
+      url: dataUrl,
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-      type: 'photo',
-      hint: 'captured photo',
+      type: type,
+      hint: `captured ${type}`,
     };
-    setGalleryPhotos(prev => [newPhoto, ...prev]);
+    setGalleryPhotos(prev => [newItem, ...prev]);
   }, []);
 
   const deletePhotoFromGallery = useCallback((photoId: string) => {
@@ -313,7 +313,7 @@ export default function Desktop() {
             appProps.onSignOut = handleSignOut;
           }
           if (win.appId === 'camera') {
-            appProps.onCapture = addPhotoToGallery;
+            appProps.onCapture = addItemToGallery;
             appProps.openApp = openApp;
           }
           if (win.appId === 'gallery') {

@@ -15,7 +15,7 @@ interface GalleryProps {
 
 export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps) {
   const { toast } = useToast();
-  const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
+  const [selectedItem, setSelectedItem] = useState<GalleryPhoto | null>(null);
   const [favorites, setFavorites] = useState<string[]>(['2', '5']);
   const [view, setView] = useState('all');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -36,12 +36,12 @@ export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps
   };
 
   const handleShare = async () => {
-    if (!selectedPhoto) return;
+    if (!selectedItem) return;
     try {
-      await navigator.clipboard.writeText(selectedPhoto.url);
+      await navigator.clipboard.writeText(selectedItem.url);
       toast({
         title: "Link Copied!",
-        description: "The photo URL has been copied to your clipboard.",
+        description: "The item URL has been copied to your clipboard.",
       });
     } catch (err) {
       console.error('Failed to copy text: ', err);
@@ -54,12 +54,12 @@ export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps
   };
 
   const handleDelete = () => {
-    if (!selectedPhoto) return;
-    onDeletePhoto(selectedPhoto.id);
-    setSelectedPhoto(null);
+    if (!selectedItem) return;
+    onDeletePhoto(selectedItem.id);
+    setSelectedItem(null);
     toast({
-      title: "Photo Deleted",
-      description: "The photo has been removed from your gallery.",
+      title: "Item Deleted",
+      description: "The item has been removed from your gallery.",
     });
   };
 
@@ -90,21 +90,30 @@ export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps
 
   return (
     <div className="w-full h-full bg-black text-white flex flex-col rounded-b-lg overflow-hidden">
-      {selectedPhoto && (
+      {selectedItem && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl animate-in fade-in-0">
           <div className="relative w-full h-full">
-            <NextImage 
-              src={selectedPhoto.url} 
-              alt="Selected"
-              fill
-              className="object-contain"
-              data-ai-hint={selectedPhoto.hint}
-            />
+            {selectedItem.type === 'photo' ? (
+                <NextImage 
+                  src={selectedItem.url} 
+                  alt="Selected"
+                  fill
+                  className="object-contain"
+                  data-ai-hint={selectedItem.hint}
+                />
+            ) : (
+                <video 
+                    src={selectedItem.url} 
+                    controls 
+                    autoPlay 
+                    className="w-full h-full object-contain"
+                />
+            )}
           
             <div className="absolute top-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)' }}>
               <div className="flex justify-between items-center">
                 <button
-                  onClick={() => setSelectedPhoto(null)}
+                  onClick={() => setSelectedItem(null)}
                   className="p-3 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors"
                 >
                   <X size={24} />
@@ -118,10 +127,10 @@ export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps
             <div className="absolute bottom-0 left-0 right-0 p-8" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
               <div className="flex justify-center items-center gap-8">
                 <button
-                  onClick={() => toggleFavorite(selectedPhoto.id)}
-                  className={`p-5 rounded-full text-white transition-colors duration-300 ${favorites.includes(selectedPhoto.id) ? 'bg-pink-500' : 'bg-white/10 backdrop-blur-xl hover:bg-white/20'}`}
+                  onClick={() => toggleFavorite(selectedItem.id)}
+                  className={`p-5 rounded-full text-white transition-colors duration-300 ${favorites.includes(selectedItem.id) ? 'bg-pink-500' : 'bg-white/10 backdrop-blur-xl hover:bg-white/20'}`}
                 >
-                  <Heart size={28} fill={favorites.includes(selectedPhoto.id) ? 'currentColor' : 'none'} />
+                  <Heart size={28} fill={favorites.includes(selectedItem.id) ? 'currentColor' : 'none'} />
                 </button>
                 <button onClick={handleShare} className="p-5 rounded-full text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-colors">
                   <Share2 size={28} />
@@ -211,7 +220,7 @@ export default function Gallery({ openApp, photos, onDeletePhoto }: GalleryProps
                   {groupedPhotos[date].map((photo) => (
                     <button
                       key={photo.id}
-                      onClick={() => setSelectedPhoto(photo)}
+                      onClick={() => setSelectedItem(photo)}
                       className="relative rounded-lg overflow-hidden group"
                       style={{ aspectRatio: '1/1' }}
                     >

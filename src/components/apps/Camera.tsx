@@ -1,26 +1,33 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RotateCw, Settings, X, Image as ImageIcon, Zap, ZapOff, Download, Share2, Sparkles } from 'lucide-react';
+import { Camera, RotateCw, Settings, X, Image as ImageIcon, Zap, ZapOff, Download, Share2, Sparkles, Video, Circle, Square } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+
 
 interface CameraAppProps {
-  onCapture: (photoDataUrl: string) => void;
+  onCapture: (dataUrl: string, type: 'photo' | 'video') => void;
   openApp?: (appId: string) => void;
 }
 
 export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
   const { toast } = useToast();
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState<{url: string, type: 'photo' | 'video'} | null>(null);
   const [facingMode, setFacingMode] = useState('user');
   const [flash, setFlash] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [mode, setMode] = useState('photo');
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+
 
   useEffect(() => {
     const startCamera = async () => {
@@ -31,21 +38,21 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
         
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: facingMode },
-          audio: false
+          audio: true // Request audio for video recording
         });
         
         setStream(mediaStream);
-        setHasCameraPermission(true);
+        setHasPermission(true);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
       } catch (err) {
-        console.error('Error accessing camera:', err);
-        setHasCameraPermission(false);
+        console.error('Error accessing media devices:', err);
+        setHasPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
+          title: 'Camera & Mic Access Denied',
+          description: 'Please enable camera and microphone permissions in your browser settings.',
         });
       }
     };
@@ -60,8 +67,8 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
   }, [facingMode, toast]);
 
   const capturePhoto = () => {
-    if (!hasCameraPermission) {
-        toast({ variant: 'destructive', title: 'Cannot capture photo', description: 'Camera permission is not granted.' });
+    if (!hasPermission) {
+        toast({ variant: 'destructive', title: 'Cannot capture photo', description: 'Permission is not granted.' });
         return;
     }
     setCapturing(true);
@@ -85,10 +92,10 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
       const imageData = canvas.toDataURL('image/png');
       
       setTimeout(() => {
-        setPhoto(imageData);
+        setPreviewContent({ url: imageData, type: 'photo' });
         setCapturing(false);
         if(onCapture) {
-          onCapture(imageData);
+          onCapture(imageData, 'photo');
           toast({
             title: "Photo Captured!",
             description: "Saved to gallery.",
@@ -97,13 +104,64 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
       }, 200);
     }
   };
+  
+  const startRecording = () => {
+    if (!stream || !hasPermission) {
+        toast({ variant: 'destructive', title: 'Cannot record video', description: 'Permissions not granted.' });
+        return;
+    }
+    
+    setIsRecording(true);
+    recordedChunksRef.current = [];
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    
+    mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            recordedChunksRef.current.push(event.data);
+        }
+    };
+    
+    mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const videoUrl = URL.createObjectURL(blob);
+        setPreviewContent({ url: videoUrl, type: 'video' });
+        if(onCapture) {
+            onCapture(videoUrl, 'video');
+             toast({
+                title: "Video Recorded!",
+                description: "Saved to gallery.",
+            });
+        }
+    };
+    
+    mediaRecorderRef.current.start();
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+  
+  const handleCapture = () => {
+    if (mode === 'photo') {
+      capturePhoto();
+    } else if (mode === 'video') {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+  };
 
   const switchCamera = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
-  const closePhoto = () => {
-    setPhoto(null);
+  const closePreview = () => {
+    setPreviewContent(null);
   };
   
   const handleOpenGallery = () => {
@@ -131,25 +189,29 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
         <div className="absolute inset-0 z-40 bg-white animate-pulse" style={{ animationDuration: '200ms' }} />
       )}
       
-      {!hasCameraPermission && hasCameraPermission !== null && (
+      {!hasPermission && hasPermission !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20 p-4">
               <Alert variant="destructive">
-                  <AlertTitle>Camera Access Required</AlertTitle>
+                  <AlertTitle>Camera & Mic Access Required</AlertTitle>
                   <AlertDescription>
-                      Please allow camera access in your browser to use this app. You may need to refresh the page after granting permission.
+                      Please allow camera and microphone access in your browser to use this app. You may need to refresh the page after granting permission.
                   </AlertDescription>
               </Alert>
           </div>
       )}
 
-      {photo && (
+      {previewContent && (
         <div className="absolute inset-0 z-50 bg-black animate-fadeIn">
-          <img src={photo} alt="Captured" className="w-full h-full object-contain" />
+            {previewContent.type === 'photo' ? (
+                <img src={previewContent.url} alt="Captured" className="w-full h-full object-contain" />
+            ) : (
+                <video src={previewContent.url} controls autoPlay className="w-full h-full object-contain" />
+            )}
           
           <div className="absolute bottom-0 left-0 right-0 p-8">
             <div className="flex justify-center items-center gap-6">
               <button
-                onClick={closePhoto}
+                onClick={closePreview}
                 className="p-5 bg-gradient-to-br from-red-500 to-pink-600 rounded-full text-white shadow-2xl hover:shadow-red-500/50 hover:scale-110 transition-all duration-300"
               >
                 <X size={28} />
@@ -178,11 +240,11 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
           
           <button
             onClick={() => setFlash(!flash)}
-            className={`p-3 backdrop-blur-xl rounded-2xl transition-all duration-300 border hover:scale-105 shadow-xl ${
+            className={cn(`p-3 backdrop-blur-xl rounded-2xl transition-all duration-300 border hover:scale-105 shadow-xl`,
               flash 
                 ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white border-yellow-300 shadow-yellow-500/50' 
                 : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-            }`}
+            )}
           >
             {flash ? <Zap size={24} /> : <ZapOff size={24} />}
           </button>
@@ -215,13 +277,21 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
           </button>
 
           <button
-            onClick={capturePhoto}
+            onClick={handleCapture}
             className="relative group"
-            disabled={capturing || !hasCameraPermission}
+            disabled={capturing || !hasPermission}
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 blur-2xl opacity-60 group-hover:opacity-100 transition-opacity animate-pulse" style={{ animationDuration: '2s' }} />
             <div className="relative w-24 h-24 rounded-full border-4 border-white/80 flex items-center justify-center bg-transparent group-hover:border-white group-hover:scale-110 transition-all duration-300 shadow-2xl">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-white via-gray-100 to-white group-hover:scale-95 transition-all duration-300 shadow-inner" />
+              {mode === 'photo' ? (
+                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-white via-gray-100 to-white group-hover:scale-95 transition-all duration-300 shadow-inner" />
+              ) : (
+                isRecording ? (
+                  <Square className="w-8 h-8 text-red-500 fill-current" />
+                ) : (
+                  <Circle className="w-10 h-10 text-red-500 fill-current" />
+                )
+              )}
             </div>
           </button>
 
@@ -236,19 +306,6 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
           </button>
         </div>
       </div>
-
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="w-full h-full grid grid-cols-3 grid-rows-3">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="border border-white/5" />
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute top-16 left-6 w-8 h-8 border-t-2 border-l-2 border-white/30 rounded-tl-lg z-10" />
-      <div className="absolute top-16 right-6 w-8 h-8 border-t-2 border-r-2 border-white/30 rounded-tr-lg z-10" />
-      <div className="absolute bottom-36 left-6 w-8 h-8 border-b-2 border-l-2 border-white/30 rounded-bl-lg z-10" />
-      <div className="absolute bottom-36 right-6 w-8 h-8 border-b-2 border-r-2 border-white/30 rounded-br-lg z-10" />
     </div>
   );
 }
