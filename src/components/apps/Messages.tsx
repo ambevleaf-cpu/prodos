@@ -15,6 +15,8 @@ import {
   CheckCheck,
   Users,
   Loader2,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import {
@@ -32,6 +34,21 @@ import {
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Input } from '../ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '../ui/scroll-area';
 
 // --- Types ---
 interface UserProfile {
@@ -73,6 +90,7 @@ export default function MessagesApp() {
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<'chats' | 'chat'>('chats');
+  const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
 
   // --- Data Fetching from Firestore ---
   const conversationsQuery = useMemoFirebase(() =>
@@ -89,19 +107,19 @@ export default function MessagesApp() {
   [firestore, selectedChat]);
   const { data: messages, isLoading: messagesLoading } = useCollection<Message>(messagesQuery);
   
-  const usersQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'users')) : null,
-  [firestore]);
-  const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
+  const allUsersQuery = useMemoFirebase(() =>
+    firestore && currentUser ? query(collection(firestore, 'users'), where('id', '!=', currentUser.uid)) : null,
+  [firestore, currentUser]);
+  const { data: allUsers, isLoading: allUsersLoading } = useCollection<UserProfile>(allUsersQuery);
 
   // --- Memos for derived data ---
   const userMap = useMemo<Record<string, UserProfile>>(() => {
-    if (!users) return {};
-    return users.reduce((acc, user) => {
+    if (!allUsers) return {};
+    return allUsers.reduce((acc, user) => {
       acc[user.id] = user;
       return acc;
     }, {} as Record<string, UserProfile>);
-  }, [users]);
+  }, [allUsers]);
   
   const conversations = useMemo(() => {
     if (!rawConversations) return [];
@@ -133,6 +151,7 @@ export default function MessagesApp() {
 
   const handleStartNewConversation = async (otherUser: UserProfile) => {
     if (!currentUser || !firestore) return;
+    setIsNewChatDialogOpen(false);
 
     const conversationId = getConversationId(currentUser.uid, otherUser.id);
     const conversationRef = doc(firestore, 'conversations', conversationId);
@@ -217,7 +236,7 @@ export default function MessagesApp() {
       return otherId ? userMap[otherId] : null;
   }
   
-  if (usersLoading) {
+  if (allUsersLoading) {
     return <div className="w-full h-full flex items-center justify-center bg-gray-100"><Loader2 className="animate-spin h-8 w-8" /></div>
   }
 
@@ -229,10 +248,35 @@ export default function MessagesApp() {
         <div className="bg-[#008069] text-white p-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold">Messenger</h1>
-            <div className="flex gap-6">
-              <Users className="w-6 h-6 cursor-pointer hover:opacity-80" />
-              <MessageCircle className="w-6 h-6 cursor-pointer hover:opacity-80" />
-              <MoreVertical className="w-6 h-6 cursor-pointer hover:opacity-80" />
+            <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => setIsNewChatDialogOpen(true)}>
+                    <Users className="w-6 h-6" />
+                </Button>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => setIsNewChatDialogOpen(true)}>
+                    <MessageCircle className="w-6 h-6" />
+                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                            <MoreVertical className="w-6 h-6" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>New group</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
           </div>
           
@@ -413,6 +457,42 @@ export default function MessagesApp() {
           </div>
         )}
       </div>
+
+       <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Start a New Chat</DialogTitle>
+            <DialogDescription>
+              Select a user to begin a conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-72">
+            <div className="p-4 space-y-2">
+            {allUsersLoading ? (
+                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+            ) : allUsers && allUsers.length > 0 ? (
+                allUsers.map(user => (
+                    <button
+                        key={user.id}
+                        className="w-full text-left flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg"
+                        onClick={() => handleStartNewConversation(user)}
+                    >
+                        <Avatar>
+                           <AvatarFallback>{user.avatar}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{user.name}</p>
+                            <p className="text-sm text-gray-500">@{user.username}</p>
+                        </div>
+                    </button>
+                ))
+            ) : (
+                <p className="text-center text-gray-500">No other users found.</p>
+            )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
