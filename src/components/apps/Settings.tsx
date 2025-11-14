@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info, Star, MessageSquare, Video, Folder, Music, CheckSquare, Brain, Camera, Languages, Clock as ClockIcon, Calculator } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info, Star, MessageSquare, Video, Folder, Music, CheckSquare, Brain, Camera, Languages, Clock as ClockIcon, Calculator, GalleryHorizontal, Youtube, Notebook } from "lucide-react";
 import { useState } from "react";
 import { galleryPhotos } from '@/lib/gallery-data';
 import NextImage from 'next/image';
@@ -72,18 +72,21 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   ];
   
   const appFeatures = [
-      { icon: MessageSquare, name: "Messenger", description: "Real-time chat with other users, powered by Firestore." },
-      { icon: Users, name: "Social Media", description: "A feed to create posts, follow users, and like content." },
-      { icon: Video, name: "Video Call", description: "Make peer-to-peer video calls using WebRTC." },
-      { icon: Bot, name: "Nexbro", description: "An AI chatbot that speaks Hinglish, powered by Genkit." },
-      { icon: Folder, name: "File Explorer", description: "Navigate a virtual file system structure." },
-      { icon: Music, name: "Music Player", description: "Listen to a playlist of tracks with metadata stored in Firestore." },
-      { icon: Camera, name: "Camera", description: "Capture photos and record videos using your device's camera." },
-      { icon: CheckSquare, name: "Task Manager", description: "Organize your to-do list with priorities and categories." },
-      { icon: Brain, name: "Mind Game", description: "Test your memory with a fun, challenging sequence game." },
-      { icon: Languages, name: "Translator", description: "Translate text between English and Hindi." },
-      { icon: ClockIcon, name: "Clock", description: "A multi-functional clock with alarms, timer, and world clocks." },
-      { icon: Calculator, name: "Calculator", description: "A standard calculator for basic arithmetic." },
+      { icon: MessageSquare, name: "Messenger", description: "Engage in one-on-one, real-time conversations. This app leverages Firestore to sync messages instantly between users, creating a seamless and responsive chat experience." },
+      { icon: Users, name: "Social Media", description: "A complete social platform where you can create posts, see a public feed, like content from others, and follow other users. All data is managed in real-time through Firestore." },
+      { icon: Video, name: "Video Call", description: "Make direct, peer-to-peer video calls to other users. This feature uses WebRTC for efficient, low-latency video streaming, with Firestore handling the call signaling." },
+      { icon: Bot, name: "Nexbro", description: "Chat with a friendly AI assistant that understands and replies in Hinglish. This app showcases the power of Genkit for creating conversational AI experiences." },
+      { icon: Folder, name: "File Explorer", description: "A classic desktop feature allowing you to browse and navigate a virtual file system, demonstrating hierarchical data structures and UI state management." },
+      { icon: Music, name: "Music Player", description: "Listen to a dynamic playlist of tracks. Track metadata is loaded from Firestore, and the app features standard playback controls, a progress bar, and volume adjustment." },
+      { icon: Camera, name: "Camera", description: "Use your device's hardware to capture photos and record videos. This app demonstrates browser Media API integration for a rich multimedia experience." },
+      { icon: GalleryHorizontal, name: "Gallery", description: "Browse your collection of photos and videos. This app includes a modal viewer with a video player and actions like sharing, downloading, or deleting items." },
+      { icon: CheckSquare, name: "Task Manager", description: "A comprehensive tool to organize your to-do list. Add tasks, set priorities and categories, specify due dates, and track your overall progress." },
+      { icon: Brain, name: "Mind Game", description: "A fun and challenging memory game that tests your ability to recall and repeat increasingly complex color sequences, complete with levels and scoring." },
+      { icon: Languages, name: "Translator", description: "Translate text between English and Hindi. This app utilizes a simple dictionary for quick translations and integrates text-to-speech functionality." },
+      { icon: ClockIcon, name: "Clock", description: "A multi-functional timekeeping app. It includes a live clock, configurable alarms, a countdown timer, a stopwatch, and a world clock to view different timezones." },
+      { icon: Calculator, name: "Calculator", description: "A sleek and standard calculator for performing basic arithmetic operations, an essential utility for any desktop environment." },
+      { icon: Youtube, name: "YouTube", description: "A simple web browser embedded in a window, configured to search and display video results from Google, demonstrating how web content can be integrated into the OS." },
+      { icon: Notebook, name: "Notes", description: "An embedded web page that serves as a simple note-taking application, showcasing how third-party web apps can be framed within the OS." },
   ]
 
   return (
@@ -279,10 +282,10 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
 
                     <div className="mb-12">
                         <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Application Suite</h4>
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
                             {appFeatures.map((app, index) => (
                                 <div key={index} className="p-4 rounded-xl flex items-start gap-4" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                                    <app.icon className="w-6 h-6 mt-1 text-purple-400 shrink-0"/>
+                                    <app.icon className="w-8 h-8 mt-1 text-purple-400 shrink-0"/>
                                     <div>
                                         <h5 className="font-bold text-base">{app.name}</h5>
                                         <p className="text-xs text-white/70">{app.description}</p>
@@ -332,3 +335,5 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
     </div>
   );
 }
+
+    
