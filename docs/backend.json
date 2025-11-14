@@ -306,8 +306,7 @@
         "name": { "type": "string", "description": "The user's display name." },
         "username": { "type": "string", "description": "The user's unique username." },
         "avatar": { "type": "string", "description": "A character or emoji representing the user's avatar." },
-        "following": { "type": "array", "items": { "type": "string" }, "description": "An array of user UIDs that this user is following." },
-        "followers": { "type": "array", "items": { "type": "string" }, "description": "An array of user UIDs that are following this user." }
+        "following": { "type": "array", "items": { "type": "string" }, "description": "An array of user UIDs that this user is following." }
       },
       "required": ["id", "name", "username", "avatar"]
     }

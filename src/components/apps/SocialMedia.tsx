@@ -28,7 +28,7 @@ interface UserProfile {
     username: string;
     avatar: string;
     following?: string[];
-    followers?: string[];
+    // followers array is removed as it's not writable by other users
 }
 
 interface Post {
@@ -81,13 +81,12 @@ export default function SocialMediaApp() {
   // Create user profile if it doesn't exist
   useEffect(() => {
     if (user && !profileLoading && !currentUserProfile && firestore) {
-      const newUserProfile: UserProfile = {
+      const newUserProfile: Omit<UserProfile, 'followers'> = {
         id: user.uid,
         name: user.displayName || 'New User',
         username: user.email?.split('@')[0] || `user${Date.now()}`,
         avatar: '👤',
         following: [],
-        followers: [],
       };
       const userDoc = doc(firestore, 'users', user.uid);
       setDoc(userDoc, newUserProfile).catch(error => {
@@ -136,25 +135,13 @@ export default function SocialMediaApp() {
     if (!user || !firestore || !currentUserProfile) return;
 
     const currentUserRef = doc(firestore, 'users', user.uid);
-    const targetUserRef = doc(firestore, 'users', targetUserId);
-    
-    const batch = writeBatch(firestore);
-    
     const isFollowing = currentUserProfile.following?.includes(targetUserId);
+    const followUpdate = isFollowing ? arrayRemove(targetUserId) : arrayUnion(targetUserId);
 
-    if (isFollowing) {
-        // Unfollow
-        batch.update(currentUserRef, { following: arrayRemove(targetUserId) });
-        batch.update(targetUserRef, { followers: arrayRemove(user.uid) });
-    } else {
-        // Follow
-        batch.update(currentUserRef, { following: arrayUnion(targetUserId) });
-        batch.update(targetUserRef, { followers: arrayUnion(user.uid) });
-    }
-
-    batch.commit().catch(error => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'batch-write', operation: 'write', requestResourceData: { user: currentUserRef.path, target: targetUserRef.path } }));
-    });
+    updateDoc(currentUserRef, { following: followUpdate })
+      .catch(error => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: currentUserRef.path, operation: 'update', requestResourceData: { following: '...' } }));
+      });
   };
   
   const handleSaveProfile = async () => {
@@ -312,7 +299,8 @@ export default function SocialMediaApp() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{u.name}</h3>
                   <p className="text-sm text-gray-500">@{u.username}</p>
-                  <p className="text-xs text-gray-400 mt-1">{u.followers?.length || 0} followers</p>
+                   {/* Follower count is not directly available, can be calculated with a query */}
+                  <p className="text-xs text-gray-400 mt-1">... followers</p>
                 </div>
                 <button
                   onClick={() => handleFollow(u.id)}
@@ -362,7 +350,8 @@ export default function SocialMediaApp() {
                 <p className="text-sm text-gray-500">Posts</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{currentUserProfile.followers?.length || 0}</p>
+                 {/* Follower count is not directly available, can be calculated with a query */}
+                <p className="text-2xl font-bold text-gray-900">...</p>
                 <p className="text-sm text-gray-500">Followers</p>
               </div>
               <div className="text-center">
