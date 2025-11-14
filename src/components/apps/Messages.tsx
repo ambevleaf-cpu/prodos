@@ -59,13 +59,24 @@ export default function MessagesApp() {
     firestore && currentUser
       ? query(
           collection(firestore, 'conversations'),
-          where('participants', 'array-contains', currentUser.uid),
-          orderBy('lastMessageTimestamp', 'desc')
+          where('participants', 'array-contains', currentUser.uid)
+          // orderBy('lastMessageTimestamp', 'desc') // This requires a composite index. Removing for now.
         )
       : null,
   [firestore, currentUser]);
-  const { data: conversations, isLoading: conversationsLoading } = useCollection<Conversation>(conversationsQuery);
+  const { data: rawConversations, isLoading: conversationsLoading } = useCollection<Conversation>(conversationsQuery);
   
+  const conversations = useMemo(() => {
+    if (!rawConversations) return [];
+    // Sort conversations by timestamp on the client
+    return [...rawConversations].sort((a, b) => {
+        const timeA = a.lastMessageTimestamp?.toMillis() || 0;
+        const timeB = b.lastMessageTimestamp?.toMillis() || 0;
+        return timeB - timeA;
+    });
+  }, [rawConversations]);
+
+
   const messagesQuery = useMemoFirebase(() =>
     firestore && selectedConversation
       ? query(
@@ -184,7 +195,7 @@ export default function MessagesApp() {
             {conversationsLoading ? (
                 <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>
             ) : (
-                conversations?.map(convo => {
+                conversations.map(convo => {
                     const otherUser = getOtherParticipant(convo.participants);
                     return (
                         <button
