@@ -271,6 +271,18 @@ export default function SocialMediaApp() {
                   <h3 className="font-semibold text-gray-900">{post.userName}</h3>
                   <p className="text-sm text-gray-500">@{post.userUsername} · {post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleTimeString() : 'Just now'}</p>
                 </div>
+                {user && post.userId !== user.uid && (
+                  <button
+                    onClick={() => handleFollow(post.userId)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium ${
+                      currentUserProfile?.following?.includes(post.userId)
+                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {currentUserProfile?.following?.includes(post.userId) ? 'Following' : 'Follow'}
+                  </button>
+                )}
               </div>
 
               <div className="px-4 pb-3">
