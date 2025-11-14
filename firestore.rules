@@ -76,7 +76,7 @@ service cloud.firestore {
       allow read: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
       
       // Caller and Callee can list their own calls
-      allow list: if request.auth.uid == request.query.get("callerId") || request.auth.uid == request.query.get("calleeId");
+      allow list: if request.auth != null && (request.query.where.callerId == request.auth.uid || request.query.where.calleeId == request.auth.uid);
 
       // Caller can update with offer, callee can update with answer or status
       allow update: if (request.auth.uid == resource.data.callerId && request.resource.data.offer != null) ||
