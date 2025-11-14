@@ -84,6 +84,9 @@ service cloud.firestore {
                        (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'rejected') ||
                        (request.auth.uid == resource.data.callerId && request.resource.data.status == 'ended') ||
                        (request.auth.uid == resource.data.calleeId && request.resource.data.status == 'ended');
+      
+      // Caller or Callee can delete the call document
+      allow delete: if request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.calleeId;
     }
     
     /**
