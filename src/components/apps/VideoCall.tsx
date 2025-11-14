@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, addDoc, onSnapshot, updateDoc, getDoc, writeBatch, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, addDoc, onSnapshot, updateDoc, getDoc, writeBatch, query, where, serverTimestamp, CollectionReference, DocumentReference } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Phone, PhoneOff, Video as VideoIcon, VideoOff, Mic, MicOff, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
+
 
 // WebRTC STUN servers configuration
 const servers = {
@@ -37,67 +39,101 @@ export default function VideoCallApp({ callId: activeCallId, setCallId: setActiv
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const createCall = async (callee: UserProfile) => {
-    if (!pc || !currentUser) {
+    if (!pc || !currentUser || !firestore) {
       toast({ variant: "destructive", title: "Error", description: "User or Peer connection not available." });
       return;
     }
     
     setIsCallActive(true);
 
-    const callDocRef = collection(firestore, 'calls');
-    const callDoc = await addDoc(callDocRef, {
+    const callPayload = {
         callerId: currentUser.uid,
         callerName: currentUser.displayName,
         calleeId: callee.id,
         calleeName: callee.name,
         status: 'offering',
         createdAt: serverTimestamp(),
-    });
+    };
     
-    setActiveCallId(callDoc.id);
+    const callCollectionRef = collection(firestore, 'calls');
 
-    const offerCandidates = collection(callDoc, 'callerCandidates');
-    const answerCandidates = collection(callDoc, 'calleeCandidates');
+    try {
+        const callDocRef = await addDoc(callCollectionRef, callPayload);
+        setActiveCallId(callDocRef.id);
 
-    pc.onicecandidate = (event) => {
-      event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
-    };
+        const offerCandidates = collection(callDocRef, 'callerCandidates');
+        const answerCandidates = collection(callDocRef, 'calleeCandidates');
 
-    const offerDescription = await pc.createOffer();
-    await pc.setLocalDescription(offerDescription);
+        pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
+            if (event.candidate) {
+                addDoc(offerCandidates, event.candidate.toJSON()).catch(err => {
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({
+                        path: offerCandidates.path,
+                        operation: 'create',
+                        requestResourceData: event.candidate.toJSON(),
+                    }));
+                });
+            }
+        };
 
-    const offer = {
-      sdp: offerDescription.sdp,
-      type: offerDescription.type,
-    };
-    await updateDoc(callDoc, { offer, status: 'ringing' });
+        const offerDescription = await pc.createOffer();
+        await pc.setLocalDescription(offerDescription);
 
-    onSnapshot(callDoc, (snapshot) => {
-      const data = snapshot.data();
-      if (!pc.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc.setRemoteDescription(answerDescription);
-      }
-       if (data?.status === 'rejected' || data?.status === 'ended') {
-        toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
-        externalHangUp();
-      }
-    });
+        const offer = {
+            sdp: offerDescription.sdp,
+            type: offerDescription.type,
+        };
 
-    onSnapshot(answerCandidates, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.addIceCandidate(candidate);
-        }
-      });
-    });
+        await updateDoc(callDocRef, { offer, status: 'ringing' });
 
-     toast({
-      title: "Calling...",
-      description: `Calling ${callee.name}.`,
-    });
-  };
+        onSnapshot(callDocRef, (snapshot) => {
+            const data = snapshot.data();
+            if (!pc.currentRemoteDescription && data?.answer) {
+                const answerDescription = new RTCSessionDescription(data.answer);
+                pc.setRemoteDescription(answerDescription);
+            }
+            if (data?.status === 'rejected' || data?.status === 'ended') {
+                toast({ title: 'Call Ended', description: `The call was ${data.status}.` });
+                externalHangUp();
+            }
+        },
+        (error) => {
+            const contextualError = new FirestorePermissionError({
+                path: callDocRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
+
+        onSnapshot(answerCandidates, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const candidate = new RTCIceCandidate(change.doc.data());
+                    pc.addIceCandidate(candidate);
+                }
+            });
+        },
+        (error) => {
+            const contextualError = new FirestorePermissionError({
+                path: answerCandidates.path,
+                operation: 'list',
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
+
+        toast({
+            title: "Calling...",
+            description: `Calling ${callee.name}.`,
+        });
+
+    } catch (err) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: callCollectionRef.path,
+            operation: 'create',
+            requestResourceData: callPayload,
+        }));
+    }
+};
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);

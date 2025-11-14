@@ -49,7 +49,6 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
       }
     },
     (error) => {
-        console.error("Incoming call listener error:", error);
         const contextualError = new FirestorePermissionError({
           path: 'calls',
           operation: 'list',
@@ -61,7 +60,7 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
   }, [user, firestore]);
 
   const answerCall = async () => {
-    if (!pc || !incomingCall) return;
+    if (!pc || !incomingCall || !firestore) return;
 
     openVideoCallApp();
     setIsCallActive(true);
@@ -72,40 +71,69 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
     const offerCandidates = collection(callDocRef, 'callerCandidates');
 
     pc.onicecandidate = (event) => {
-      event.candidate && answerCandidates.add(event.candidate.toJSON());
+      if (event.candidate) {
+        addDoc(answerCandidates, event.candidate.toJSON()).catch(err => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: answerCandidates.path,
+                operation: 'create',
+                requestResourceData: event.candidate.toJSON(),
+            }));
+        });
+      }
     };
 
-    const callData = (await getDoc(callDocRef)).data();
-    if (callData?.offer) {
-        await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
-    }
-    
-    const answerDescription = await pc.createAnswer();
-    await pc.setLocalDescription(answerDescription);
-
-    const answer = {
-      type: answerDescription.type,
-      sdp: answerDescription.sdp,
-    };
-
-    await updateDoc(callDocRef, { answer, status: 'answered' });
-
-    onSnapshot(offerCandidates, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc.addIceCandidate(candidate);
+    try {
+        const callData = (await getDoc(callDocRef)).data();
+        if (callData?.offer) {
+            await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
         }
-      });
-    });
+        
+        const answerDescription = await pc.createAnswer();
+        await pc.setLocalDescription(answerDescription);
+
+        const answer = {
+          type: answerDescription.type,
+          sdp: answerDescription.sdp,
+        };
+
+        await updateDoc(callDocRef, { answer, status: 'answered' });
+
+        onSnapshot(offerCandidates, (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const candidate = new RTCIceCandidate(change.doc.data());
+              pc.addIceCandidate(candidate);
+            }
+          });
+        },
+        (error) => {
+            const contextualError = new FirestorePermissionError({
+                path: offerCandidates.path,
+                operation: 'list',
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
+
+    } catch (err) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: callDocRef.path,
+            operation: 'get',
+        }));
+    }
 
     setIncomingCall(null);
   };
 
   const rejectCall = async () => {
-    if (!incomingCall) return;
+    if (!incomingCall || !firestore) return;
     const callDocRef = doc(firestore, 'calls', incomingCall.id);
-    await updateDoc(callDocRef, { status: 'rejected' });
+    await updateDoc(callDocRef, { status: 'rejected' }).catch(err => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: callDocRef.path,
+            operation: 'update',
+            requestResourceData: { status: 'rejected' },
+        }));
+    });
     setIncomingCall(null);
     toast({
       title: 'Call Rejected',
