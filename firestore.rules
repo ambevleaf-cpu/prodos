@@ -242,11 +242,10 @@ service cloud.firestore {
     match /users/{userId}/notifications/{notificationId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      // Any authenticated user can create a notification for another user.
+      allow create: if request.auth != null;
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
   }
 }
-
-    
