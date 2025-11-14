@@ -22,11 +22,13 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
   const [mode, setMode] = useState('photo');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 
   useEffect(() => {
@@ -62,6 +64,9 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+      }
+       if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
       }
     };
   }, [facingMode, toast]);
@@ -112,6 +117,11 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
     }
     
     setIsRecording(true);
+    setRecordingTime(0);
+    recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+    }, 1000);
+
     recordedChunksRef.current = [];
     mediaRecorderRef.current = new MediaRecorder(stream);
     
@@ -141,6 +151,9 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
     }
   };
   
@@ -168,6 +181,12 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
     if(openApp) {
         openApp('gallery');
     }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
   };
 
   return (
@@ -198,6 +217,13 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
                   </AlertDescription>
               </Alert>
           </div>
+      )}
+
+      {isRecording && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-red-600/80 text-white px-4 py-1.5 rounded-full flex items-center gap-2 font-mono">
+            <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></div>
+            <span>{formatTime(recordingTime)}</span>
+        </div>
       )}
 
       {previewContent && (
@@ -287,7 +313,7 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-white via-gray-100 to-white group-hover:scale-95 transition-all duration-300 shadow-inner" />
               ) : (
                 isRecording ? (
-                  <Square className="w-8 h-8 text-red-500 fill-current" />
+                  <Square className="w-8 h-8 text-red-500 fill-current animate-pulse" />
                 ) : (
                   <Circle className="w-10 h-10 text-red-500 fill-current" />
                 )
@@ -309,3 +335,5 @@ export default function CameraApp({ onCapture, openApp }: CameraAppProps) {
     </div>
   );
 }
+
+    
