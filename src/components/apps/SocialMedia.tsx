@@ -39,6 +39,47 @@ interface Post {
     createdAt: any; // Firestore timestamp
 }
 
+
+// New component to handle individual user card logic
+const UserCard = ({ u, currentUserProfile, onFollow }: { u: UserProfile, currentUserProfile: UserProfile | null, onFollow: (targetUserId: string) => void }) => {
+    const firestore = useFirestore();
+    
+    // Query to get followers for this specific user `u`
+    const userFollowersQuery = useMemoFirebase(() =>
+        firestore ? query(collection(firestore, 'users'), where('following', 'array-contains', u.id)) : null
+    , [firestore, u.id]);
+    const { data: userFollowers, isLoading: userFollowersLoading } = useCollection<UserProfile>(userFollowersQuery);
+
+    return (
+        <div key={u.id} className="bg-white rounded-lg shadow-sm p-4">
+            <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
+                    {u.avatar}
+                </div>
+                <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{u.name}</h3>
+                    <p className="text-sm text-gray-500">@{u.username}</p>
+                    <div className="text-xs text-gray-400 mt-1 flex gap-4">
+                        <span>Following {u.following?.length || 0}</span>
+                        <span>Followers {userFollowersLoading ? '...' : userFollowers?.length || 0}</span>
+                    </div>
+                </div>
+                <button
+                    onClick={() => onFollow(u.id)}
+                    className={`px-6 py-2 rounded-lg font-medium ${
+                    currentUserProfile?.following?.includes(u.id)
+                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                >
+                    {currentUserProfile?.following?.includes(u.id) ? 'Following' : 'Follow'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
 export default function SocialMediaApp() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -295,31 +336,7 @@ export default function SocialMediaApp() {
           </div>
         ) : (
           filteredUsers.map(u => (
-            <div key={u.id} className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl">
-                  {u.avatar}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{u.name}</h3>
-                  <p className="text-sm text-gray-500">@{u.username}</p>
-                  <div className="text-xs text-gray-400 mt-1 flex gap-4">
-                    <span>Following {u.following?.length || 0}</span>
-                    <span>Followers ...</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleFollow(u.id)}
-                  className={`px-6 py-2 rounded-lg font-medium ${
-                    currentUserProfile?.following?.includes(u.id)
-                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {currentUserProfile?.following?.includes(u.id) ? 'Following' : 'Follow'}
-                </button>
-              </div>
-            </div>
+            <UserCard key={u.id} u={u} currentUserProfile={currentUserProfile} onFollow={handleFollow} />
           ))
         )}
       </div>
