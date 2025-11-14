@@ -17,7 +17,6 @@ import {
   arrayUnion,
   arrayRemove,
   where,
-  writeBatch,
   setDoc,
 } from 'firebase/firestore';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -28,7 +27,6 @@ interface UserProfile {
     username: string;
     avatar: string;
     following?: string[];
-    // followers array is removed as it's not writable by other users
 }
 
 interface Post {
@@ -67,6 +65,12 @@ export default function SocialMediaApp() {
   , [firestore, user]);
   const { data: currentUserProfile, isLoading: profileLoading } = useDoc<UserProfile>(currentUserDocRef);
   
+  // Query to get followers for the current user
+  const followersQuery = useMemoFirebase(() =>
+    firestore && user ? query(collection(firestore, 'users'), where('following', 'array-contains', user.uid)) : null
+  , [firestore, user]);
+  const { data: followers, isLoading: followersLoading } = useCollection<UserProfile>(followersQuery);
+
   const [editedName, setEditedName] = useState('');
   const [editedUsername, setEditedUsername] = useState('');
 
@@ -350,8 +354,7 @@ export default function SocialMediaApp() {
                 <p className="text-sm text-gray-500">Posts</p>
               </div>
               <div className="text-center">
-                 {/* Follower count is not directly available, can be calculated with a query */}
-                <p className="text-2xl font-bold text-gray-900">...</p>
+                <p className="text-2xl font-bold text-gray-900">{followersLoading ? '...' : followers?.length || 0}</p>
                 <p className="text-sm text-gray-500">Followers</p>
               </div>
               <div className="text-center">
@@ -422,7 +425,7 @@ export default function SocialMediaApp() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-blue-600">Socialize</h1>
           <div className="flex items-center gap-4">
-            <Bell className="w-6 h-6 text-gray-600 cursor-pointer hover:text-blue-600" />
+            <Bell className="w-6 h-6 text-gray-600 cursor-pointer hover:text-blue-600" onClick={() => setActiveTab('notifications')} />
             <Menu className="w-6 h-6 text-gray-600 cursor-pointer hover:text-blue-600" />
           </div>
         </div>
