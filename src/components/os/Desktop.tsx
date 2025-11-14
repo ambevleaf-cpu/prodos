@@ -18,6 +18,7 @@ import TaskManager from '../apps/TaskManager';
 import SocialMediaApp from '../apps/SocialMedia';
 import VideoCallApp from '../apps/VideoCall';
 import NexbroChatbot from '../apps/Nexbro';
+import MindGame from '../apps/MindGame';
 import TaskListWidget from './TaskListWidget';
 import IncomingCallManager from './IncomingCallManager';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
@@ -53,6 +54,7 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   socialMedia: SocialMediaApp,
   videoCall: VideoCallApp,
   nexbro: NexbroChatbot,
+  mindGame: MindGame,
 };
 
 export default function Desktop() {
@@ -162,8 +164,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: ['calculator', 'nexbro'].includes(app.id) ? 450 : (['clock', 'taskManager'].includes(app.id) ? 900 : 800),
-      height: ['clock', 'taskManager', 'videoCall', 'nexbro'].includes(app.id) ? 700 : 600,
+      width: ['calculator', 'nexbro'].includes(app.id) ? 450 : (['clock', 'taskManager', 'mindGame'].includes(app.id) ? 900 : 800),
+      height: ['clock', 'taskManager', 'videoCall', 'nexbro', 'mindGame'].includes(app.id) ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,
