@@ -1,4 +1,4 @@
-import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, Video, Bot, Brain, Info, MessageSquare, type LucideIcon } from 'lucide-react';
+import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, Video, Bot, Brain, Info, MessageSquare, Music, type LucideIcon } from 'lucide-react';
 
 export interface AppConfig {
   id: string;
@@ -21,6 +21,11 @@ export const APPS_CONFIG: AppConfig[] = [
     id: 'gallery',
     title: 'Gallery',
     icon: GalleryHorizontal,
+  },
+  {
+    id: 'musicPlayer',
+    title: 'Music Player',
+    icon: Music,
   },
   {
     id: 'youtube',
@@ -83,3 +88,5 @@ export const APPS_CONFIG: AppConfig[] = [
     icon: Camera,
   },
 ];
+
+    

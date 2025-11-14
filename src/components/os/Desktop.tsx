@@ -20,6 +20,7 @@ import VideoCallApp from '../apps/VideoCall';
 import NexbroChatbot from '../apps/Nexbro';
 import MindGame from '../apps/MindGame';
 import MessagesApp from '../apps/Messages';
+import MusicPlayer from '../apps/MusicPlayer';
 import TaskListWidget from './TaskListWidget';
 import IncomingCallManager from './IncomingCallManager';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
@@ -57,6 +58,7 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   nexbro: NexbroChatbot,
   mindGame: MindGame,
   messages: MessagesApp,
+  musicPlayer: MusicPlayer,
 };
 
 export default function Desktop() {
@@ -66,7 +68,7 @@ export default function Desktop() {
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(initialGalleryPhotos);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [useAnimatedWallpaper, setUseAnimatedWallpaper] = useState(true);
-  const [callDetails, setCallDetails] = useState<{ callId: string | null, isCallActive: boolean }>({ callId: null, isCallActive: false });
+  const [callDetails, setCallDetails] = useState<{ callId: string | null; isCallActive: boolean }>({ callId: null, isCallActive: false });
 
   const desktopRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef<{ windowId: string; offsetX: number; offsetY: number } | null>(null);
@@ -166,8 +168,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: ['calculator', 'nexbro', 'messages'].includes(app.id) ? 450 : (['clock', 'taskManager', 'mindGame', 'settings'].includes(app.id) ? 900 : 800),
-      height: ['clock', 'taskManager', 'videoCall', 'nexbro', 'mindGame', 'settings', 'messages'].includes(app.id) ? 700 : 600,
+      width: ['calculator', 'nexbro', 'messages', 'musicPlayer'].includes(app.id) ? 450 : (['clock', 'taskManager', 'mindGame', 'settings'].includes(app.id) ? 900 : 800),
+      height: ['clock', 'taskManager', 'videoCall', 'nexbro', 'mindGame', 'settings', 'messages', 'musicPlayer'].includes(app.id) ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,
@@ -330,3 +332,5 @@ export default function Desktop() {
     </div>
   );
 }
+
+    
