@@ -34,6 +34,7 @@ export interface WindowInstance {
   height: number;
   zIndex: number;
   isMinimized: boolean;
+  isMaximized: boolean;
 }
 
 const appComponentMap: { [key: string]: React.ComponentType<any> } = {
@@ -152,6 +153,7 @@ export default function Desktop() {
       height: app.id === 'clock' || app.id === 'taskManager' ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
+      isMaximized: false,
     };
 
     setWindows(prev => [...prev, newWindow]);
@@ -171,10 +173,23 @@ export default function Desktop() {
     setActiveWindowId(null);
   }, []);
 
+  const toggleMaximizeWindow = useCallback((windowId: string) => {
+    setWindows(prevWindows =>
+      prevWindows.map(w =>
+        w.id === windowId
+          ? { ...w, isMaximized: !w.isMaximized, zIndex: nextZIndex }
+          : w
+      )
+    );
+    setActiveWindowId(windowId);
+    setNextZIndex(prev => prev + 1);
+  }, [nextZIndex]);
+
+
   const onDragStart = useCallback((windowId: string, e: React.MouseEvent) => {
     focusWindow(windowId);
     const window = windows.find(w => w.id === windowId);
-    if (!window) return;
+    if (!window || window.isMaximized) return;
     dragInfo.current = {
       windowId,
       offsetX: e.clientX - window.x,
@@ -186,7 +201,7 @@ export default function Desktop() {
     focusWindow(windowId);
     e.stopPropagation();
     const window = windows.find(w => w.id === windowId);
-    if (!window) return;
+    if (!window || window.isMaximized) return;
     resizeInfo.current = {
       windowId,
       startX: e.clientX,
@@ -236,7 +251,7 @@ export default function Desktop() {
       </div>
 
       <TopBar />
-      <div className="flex-grow relative">
+      <div className="flex-grow relative" ref={desktopRef}>
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
         {openWindows.map(win => {
           const AppComponent = appComponentMap[win.appId];
@@ -267,10 +282,12 @@ export default function Desktop() {
             <Window
               key={win.id}
               {...win}
+              desktopRef={desktopRef}
               isActive={win.id === activeWindowId}
               onFocus={() => focusWindow(win.id)}
               onClose={() => closeWindow(win.id)}
               onMinimize={() => minimizeWindow(win.id)}
+              onMaximize={() => toggleMaximizeWindow(win.id)}
               onDragStart={(e) => onDragStart(win.id, e)}
               onResizeStart={(e) => onResizeStart(win.id, e)}
             >
