@@ -49,8 +49,8 @@ export default function Window({
   const getWindowStyle = (): React.CSSProperties => {
     if (isMaximized && desktopRef.current) {
         const desktopRect = desktopRef.current.getBoundingClientRect();
-        const topBarHeight = 32; // from TopBar.tsx h-8
-        const dockHeight = 80; // Approximate height of the dock
+        // Dock height is roughly 80px, coming from h-14 (56px) + p-2 (8px * 2) + gap-1 (4px) etc.
+        const dockHeight = 80;
         
         return {
             transform: `translate(0px, 0px)`,
