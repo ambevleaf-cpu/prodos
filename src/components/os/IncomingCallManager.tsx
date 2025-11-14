@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -25,9 +25,14 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
   const { user } = useUser();
   const [incomingCall, setIncomingCall] = useState<any>(null);
   const { toast } = useToast();
-  
+  const callListenerUnsubscribe = useRef<() => void | undefined>();
+
+  // Effect to listen for new ringing calls
   useEffect(() => {
     if (!user || !firestore) return;
+
+    // We only want to set up this listener if there isn't already an active call pop-up
+    if (incomingCall) return;
 
     const q = query(
       collection(firestore, 'calls'),
@@ -36,11 +41,9 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
+      if (!snapshot.empty && !incomingCall) {
         const callDoc = snapshot.docs[0];
         setIncomingCall({ id: callDoc.id, ...callDoc.data() });
-      } else {
-        setIncomingCall(null);
       }
     },
     (error) => {
@@ -52,11 +55,39 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [user, firestore, incomingCall]);
+
+  // Effect to listen to the *specific* active incoming call for status changes
+  useEffect(() => {
+    if (incomingCall && firestore) {
+      const callDocRef = doc(firestore, 'calls', incomingCall.id);
+      
+      callListenerUnsubscribe.current = onSnapshot(callDocRef, (doc) => {
+        const data = doc.data();
+        // If call is no longer ringing (e.g., caller hung up), close the dialog
+        if (data?.status !== 'ringing') {
+          setIncomingCall(null);
+        }
+      });
+
+      return () => {
+        if (callListenerUnsubscribe.current) {
+          callListenerUnsubscribe.current();
+          callListenerUnsubscribe.current = undefined;
+        }
+      };
+    }
+  }, [incomingCall, firestore]);
 
   const answerCall = () => {
     if (!incomingCall) return;
     
+    // Stop listening to this call document
+    if (callListenerUnsubscribe.current) {
+      callListenerUnsubscribe.current();
+      callListenerUnsubscribe.current = undefined;
+    }
+
     setCallDetails({ callId: incomingCall.id, isCallActive: true });
     openVideoCallApp();
     
@@ -65,6 +96,13 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
 
   const rejectCall = async () => {
     if (!incomingCall || !firestore) return;
+
+    // Stop listening to this call document
+    if (callListenerUnsubscribe.current) {
+      callListenerUnsubscribe.current();
+      callListenerUnsubscribe.current = undefined;
+    }
+
     const callDocRef = doc(firestore, 'calls', incomingCall.id);
     await updateDoc(callDocRef, { status: 'rejected' }).catch(err => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -73,6 +111,7 @@ export default function IncomingCallManager({ setCallDetails, openVideoCallApp }
             requestResourceData: { status: 'rejected' },
         }));
     });
+
     setIncomingCall(null);
     toast({
       title: 'Call Rejected',
