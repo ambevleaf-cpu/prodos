@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchDialog from './SearchDialog';
 
-export default function TopBar() {
+interface TopBarProps {
+  onReset: () => void;
+}
+
+export default function TopBar({ onReset }: TopBarProps) {
   const [currentTime, setCurrentTime] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -25,6 +29,14 @@ export default function TopBar() {
           <span className="font-bold">Prod</span> OS
         </div>
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={onReset}
+          >
+            <RotateCw className="w-4 h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

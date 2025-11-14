@@ -67,6 +67,10 @@ export default function Desktop() {
   const resizeInfo = useRef<{ windowId: string; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
   const auth = useAuth();
 
+  const handleResetDesktop = useCallback(() => {
+    setWindows([]);
+    setActiveWindowId(null);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -252,7 +256,7 @@ export default function Desktop() {
         <AnimatedWallpaper />
       </div>
 
-      <TopBar />
+      <TopBar onReset={handleResetDesktop} />
       <div className="flex-grow relative" ref={desktopRef}>
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
         {openWindows.map(win => {
