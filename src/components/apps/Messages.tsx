@@ -112,21 +112,30 @@ export default function MessagesApp() {
     const conversationId = getConversationId(currentUser.uid, otherUser.id);
     const conversationRef = doc(firestore, 'conversations', conversationId);
     
-    const conversationSnap = await getDoc(conversationRef);
-
-    if (conversationSnap.exists()) {
-      handleSelectConversation({ id: conversationSnap.id, ...conversationSnap.data() } as Conversation);
-    } else {
-      const newConversation: Conversation = {
-        participants: [currentUser.uid, otherUser.id],
-      };
-      await setDoc(conversationRef, newConversation).catch(error => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: conversationRef.path, operation: 'create', requestResourceData: newConversation
-        }));
+    getDoc(conversationRef)
+      .then(conversationSnap => {
+        if (conversationSnap.exists()) {
+          handleSelectConversation({ id: conversationSnap.id, ...conversationSnap.data() } as Conversation);
+        } else {
+          const newConversation: Conversation = {
+            participants: [currentUser.uid, otherUser.id],
+          };
+          setDoc(conversationRef, newConversation)
+            .then(() => {
+                handleSelectConversation({ id: conversationId, ...newConversation });
+            })
+            .catch(error => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                  path: conversationRef.path, operation: 'create', requestResourceData: newConversation
+              }));
+            });
+        }
+      })
+      .catch(error => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: conversationRef.path, operation: 'get'
+          }));
       });
-      handleSelectConversation({ id: conversationId, ...newConversation });
-    }
   };
 
   const handleSendMessage = async () => {
@@ -139,7 +148,7 @@ export default function MessagesApp() {
       timestamp: serverTimestamp(),
     };
     
-    await addDoc(messagesColRef, messagePayload).catch(error => {
+    addDoc(messagesColRef, messagePayload).catch(error => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: messagesColRef.path, operation: 'create', requestResourceData: messagePayload
         }));
@@ -150,7 +159,7 @@ export default function MessagesApp() {
       lastMessage: newMessage,
       lastMessageTimestamp: serverTimestamp(),
     };
-    await setDoc(conversationRef, conversationUpdatePayload, { merge: true }).catch(error => {
+    setDoc(conversationRef, conversationUpdatePayload, { merge: true }).catch(error => {
          errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: conversationRef.path, operation: 'write', requestResourceData: conversationUpdatePayload
         }));
