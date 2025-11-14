@@ -24,6 +24,7 @@ import MusicPlayer from '../apps/MusicPlayer';
 import TaskListWidget from './TaskListWidget';
 import IncomingCallManager from './IncomingCallManager';
 import { galleryPhotos as initialGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-data';
+import { playlist as initialPlaylist, type Track } from '@/lib/music-data';
 import type { Task } from '@/lib/types';
 import AnimatedWallpaper from './AnimatedWallpaper';
 import { useAuth } from '@/firebase';
@@ -67,6 +68,7 @@ export default function Desktop() {
   const [nextZIndex, setNextZIndex] = useState(10);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(initialGalleryPhotos);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [playlist, setPlaylist] = useState<Track[]>(initialPlaylist);
   const [useAnimatedWallpaper, setUseAnimatedWallpaper] = useState(true);
   const [callDetails, setCallDetails] = useState<{ callId: string | null; isCallActive: boolean }>({ callId: null, isCallActive: false });
 
@@ -138,6 +140,15 @@ export default function Desktop() {
     ));
   }, []);
   
+  // Music Management Logic
+  const addTrack = useCallback((track: Omit<Track, 'id'>) => {
+    const newTrack: Track = {
+      ...track,
+      id: Date.now(),
+    };
+    setPlaylist(prev => [...prev, newTrack]);
+  }, []);
+
   const focusWindow = useCallback((windowId: string) => {
     if (activeWindowId === windowId) return;
 
@@ -309,6 +320,11 @@ export default function Desktop() {
             appProps.callDetails = callDetails;
             appProps.setCallDetails = setCallDetails;
           }
+          if (win.appId === 'musicPlayer') {
+            appProps.playlist = playlist;
+            appProps.addTrack = addTrack;
+          }
+
 
           return (
             <Window
@@ -332,5 +348,3 @@ export default function Desktop() {
     </div>
   );
 }
-
-    

@@ -2,14 +2,23 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, Shuffle, Repeat } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, Shuffle, Repeat, Plus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { playlist, type Track } from '@/lib/music-data';
+import { type Track } from '@/lib/music-data';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
-export default function MusicPlayer() {
+interface MusicPlayerProps {
+  playlist: Track[];
+  addTrack: (track: Omit<Track, 'id'>) => void;
+}
+
+export default function MusicPlayer({ playlist, addTrack }: MusicPlayerProps) {
+  const { toast } = useToast();
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -17,6 +26,13 @@ export default function MusicPlayer() {
   const [duration, setDuration] = useState(0);
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
+  const [isAddSongOpen, setIsAddSongOpen] = useState(false);
+
+  const [newTitle, setNewTitle] = useState('');
+  const [newArtist, setNewArtist] = useState('');
+  const [newUrl, setNewUrl] = useState('');
+  const [newCoverArt, setNewCoverArt] = useState('');
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const currentTrack = playlist[currentTrackIndex];
@@ -30,7 +46,7 @@ export default function MusicPlayer() {
         audio.pause();
       }
     }
-  }, [isPlaying, currentTrackIndex]);
+  }, [isPlaying, currentTrackIndex, playlist]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -38,6 +54,14 @@ export default function MusicPlayer() {
       audio.volume = volume;
     }
   }, [volume]);
+
+  useEffect(() => {
+    // If the playlist changes and the current track is no longer valid, reset.
+    if (currentTrackIndex >= playlist.length) {
+      setCurrentTrackIndex(0);
+      setIsPlaying(false);
+    }
+  }, [playlist, currentTrackIndex]);
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
@@ -60,10 +84,12 @@ export default function MusicPlayer() {
   };
 
   const togglePlayPause = () => {
+    if (!currentTrack) return;
     setIsPlaying(!isPlaying);
   };
 
   const handleNext = () => {
+    if (playlist.length === 0) return;
     if (isShuffle) {
       setCurrentTrackIndex(Math.floor(Math.random() * playlist.length));
     } else {
@@ -72,6 +98,7 @@ export default function MusicPlayer() {
   };
 
   const handlePrev = () => {
+    if (playlist.length === 0) return;
     setCurrentTrackIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
   };
   
@@ -90,8 +117,47 @@ export default function MusicPlayer() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleAddSong = () => {
+    if (!newTitle || !newArtist || !newUrl || !newCoverArt) {
+        toast({
+            variant: "destructive",
+            title: "Missing Fields",
+            description: "Please fill out all fields to add the song.",
+        });
+        return;
+    }
+    addTrack({
+        title: newTitle,
+        artist: newArtist,
+        url: newUrl,
+        coverArt: newCoverArt,
+    });
+    toast({
+        title: "Song Added!",
+        description: `"${newTitle}" by ${newArtist} has been added to the playlist.`,
+    });
+    // Reset form and close dialog
+    setNewTitle('');
+    setNewArtist('');
+    setNewUrl('');
+    setNewCoverArt('');
+    setIsAddSongOpen(false);
+  };
+
+  if (!currentTrack) {
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-purple-900/50 text-white rounded-b-lg overflow-hidden">
+            <h2 className="text-2xl font-bold mb-4">No songs in playlist</h2>
+            <Button onClick={() => setIsAddSongOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Add a Song
+            </Button>
+        </div>
+    )
+  }
+
 
   return (
+    <>
     <div className="w-full h-full flex flex-col bg-gradient-to-br from-gray-900 via-black to-purple-900/50 text-white rounded-b-lg overflow-hidden">
         <audio
             ref={audioRef}
@@ -99,6 +165,7 @@ export default function MusicPlayer() {
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleTimeUpdate}
             onEnded={handleTrackEnd}
+            key={currentTrack.id}
         />
         
         {/* Album Art & Info */}
@@ -112,14 +179,14 @@ export default function MusicPlayer() {
                 />
             </div>
             
-            <Card className="w-64 h-64 md:w-80 md:h-80 relative z-10 shadow-2xl rounded-2xl overflow-hidden border-4 border-white/10">
+            <div className="w-64 h-64 md:w-80 md:h-80 relative z-10 shadow-2xl rounded-2xl overflow-hidden border-4 border-white/10">
                 <Image
                     src={currentTrack.coverArt}
                     alt={currentTrack.title}
                     fill
                     className="object-cover"
                 />
-            </Card>
+            </div>
             <h2 className="text-3xl font-bold mt-8 z-10">{currentTrack.title}</h2>
             <p className="text-purple-300 z-10">{currentTrack.artist}</p>
         </div>
@@ -170,11 +237,46 @@ export default function MusicPlayer() {
                         onValueChange={(value) => setVolume(value[0])}
                     />
                 </div>
-                <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white">
-                    <ListMusic />
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white">
+                        <ListMusic />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white" onClick={() => setIsAddSongOpen(true)}>
+                        <Plus />
+                    </Button>
+                </div>
             </div>
         </div>
     </div>
+    <Dialog open={isAddSongOpen} onOpenChange={setIsAddSongOpen}>
+        <DialogContent>
+            <DialogHeader>
+            <DialogTitle>Add a New Song</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input id="title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Song Title" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="artist">Artist</Label>
+                    <Input id="artist" value={newArtist} onChange={(e) => setNewArtist(e.target.value)} placeholder="Artist Name" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="url">Song URL (.mp3)</Label>
+                    <Input id="url" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://example.com/song.mp3" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="coverArt">Cover Art URL</Label>
+                    <Input id="coverArt" value={newCoverArt} onChange={(e) => setNewCoverArt(e.target.value)} placeholder="https://example.com/cover.jpg" />
+                </div>
+            </div>
+            <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddSongOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddSong}>Add Song</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
