@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Paperclip, Smile, MoreVertical, Sparkles, Zap, Heart, Menu, X, Loader2 } from 'lucide-react';
 import { handleNexbroChat } from '@/app/actions';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
@@ -74,7 +74,11 @@ export default function NexbroChatbot() {
           isRead: false,
       };
       addDoc(notificationCol, notificationPayload).catch(error => {
-          console.error("Error creating notification:", error);
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: notificationCol.path,
+              operation: 'create',
+              requestResourceData: notificationPayload
+          }));
       });
     }
   };

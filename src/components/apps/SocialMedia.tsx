@@ -194,8 +194,11 @@ export default function SocialMediaApp() {
             isRead: false,
         };
         addDoc(notificationCol, notificationPayload).catch(error => {
-            console.error("Error creating notification:", error);
-            // Optionally emit a permission error if needed for notifications
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: notificationCol.path,
+                operation: 'create',
+                requestResourceData: notificationPayload
+            }));
         });
     }
   };

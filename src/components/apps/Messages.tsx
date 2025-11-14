@@ -178,7 +178,11 @@ export default function MessagesApp() {
         isRead: false,
     };
     addDoc(notificationCol, notificationPayload).catch(error => {
-        console.error("Error creating notification:", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: notificationCol.path,
+            operation: 'create',
+            requestResourceData: notificationPayload
+        }));
     });
 
     setNewMessage('');
