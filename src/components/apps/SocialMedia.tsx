@@ -44,7 +44,6 @@ interface Post {
 const UserCard = ({ u, currentUserProfile, onFollow }: { u: UserProfile, currentUserProfile: UserProfile | null, onFollow: (targetUserId: string) => void }) => {
     const firestore = useFirestore();
     
-    // Query to get followers for this specific user `u`
     const userFollowersQuery = useMemoFirebase(() =>
         firestore ? query(collection(firestore, 'users'), where('following', 'array-contains', u.id)) : null
     , [firestore, u.id]);
@@ -106,7 +105,6 @@ export default function SocialMediaApp() {
   , [firestore, user]);
   const { data: currentUserProfile, isLoading: profileLoading } = useDoc<UserProfile>(currentUserDocRef);
   
-  // Query to get followers for the current user
   const followersQuery = useMemoFirebase(() =>
     firestore && user ? query(collection(firestore, 'users'), where('following', 'array-contains', user.uid)) : null
   , [firestore, user]);
@@ -115,7 +113,6 @@ export default function SocialMediaApp() {
   const [editedName, setEditedName] = useState('');
   const [editedUsername, setEditedUsername] = useState('');
 
-  // Update local state for editing when profile data loads
   useEffect(() => {
     if (currentUserProfile) {
       setEditedName(currentUserProfile.name);
@@ -123,7 +120,6 @@ export default function SocialMediaApp() {
     }
   }, [currentUserProfile]);
 
-  // Create user profile if it doesn't exist
   useEffect(() => {
     if (user && !profileLoading && !currentUserProfile && firestore) {
       const newUserProfile: UserProfile = {
@@ -215,7 +211,6 @@ export default function SocialMediaApp() {
 
   const renderHomePage = () => (
     <>
-      {/* New Post Button */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl">
@@ -256,7 +251,6 @@ export default function SocialMediaApp() {
         )}
       </div>
 
-      {/* Feed */}
       <div className="space-y-4">
         {postsLoading ? (
             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
@@ -322,7 +316,6 @@ export default function SocialMediaApp() {
 
   const renderSearchPage = () => (
     <div>
-      {/* Search Bar */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex items-center gap-3 px-4 py-2 bg-gray-100 rounded-full">
           <Search className="w-5 h-5 text-gray-500" />
@@ -336,7 +329,6 @@ export default function SocialMediaApp() {
         </div>
       </div>
 
-      {/* User Results */}
       <div className="space-y-3">
         {usersLoading ? (
             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
@@ -451,7 +443,6 @@ export default function SocialMediaApp() {
 
   return (
     <div className="min-h-full bg-gray-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-blue-600">Socialize</h1>
@@ -462,7 +453,6 @@ export default function SocialMediaApp() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 max-w-2xl mx-auto px-4 py-6 w-full overflow-y-auto">
         {activeTab === 'home' && renderHomePage()}
         {activeTab === 'search' && renderSearchPage()}
@@ -470,7 +460,6 @@ export default function SocialMediaApp() {
         {activeTab === 'profile' && renderProfilePage()}
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-3 flex justify-around">
           <button
