@@ -60,7 +60,6 @@ export default function MessagesApp() {
       ? query(
           collection(firestore, 'conversations'),
           where('participants', 'array-contains', currentUser.uid)
-          // orderBy('lastMessageTimestamp', 'desc') // This requires a composite index. Removing for now.
         )
       : null,
   [firestore, currentUser]);
@@ -299,3 +298,5 @@ export default function MessagesApp() {
     </div>
   );
 }
+
+    
