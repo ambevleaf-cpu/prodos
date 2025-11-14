@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, getDoc, collectionGroup } from 'firebase/firestore';
+import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +47,14 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
       } else {
         setIncomingCall(null);
       }
+    },
+    (error) => {
+        console.error("Incoming call listener error:", error);
+        const contextualError = new FirestorePermissionError({
+          path: 'calls',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', contextualError);
     });
 
     return () => unsubscribe();
