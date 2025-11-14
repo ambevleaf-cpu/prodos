@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info, Star, MessageSquare, Video, Folder, Music, CheckSquare, Brain, Camera, Languages, Clock as ClockIcon, Calculator } from "lucide-react";
 import { useState } from "react";
 import { galleryPhotos } from '@/lib/gallery-data';
 import NextImage from 'next/image';
@@ -39,12 +39,52 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   const [wifi, setWifi] = useState(true);
 
   const features = [
-    { icon: Wind, title: "Multitasking UI", description: "Manage multiple apps seamlessly in a familiar desktop environment with draggable and resizable windows." },
-    { icon: Bot, title: "AI-Powered Features", description: "Experience the future with an integrated AI chatbot (Nexbro) and natural language search capabilities." },
-    { icon: Users, title: "Real-Time Collaboration", description: "Connect with others through built-in social media and WebRTC-powered video calling." },
-    { icon: Sparkles, title: "Rich Application Suite", description: "Explore a variety of built-in apps, including a gallery, task manager, games, and media tools." },
-    { icon: Code, title: "Modern Tech Stack", description: "Built with Next.js, Firebase, Genkit, and Tailwind CSS for a high-performance, scalable experience." },
+    { 
+        icon: Wind, 
+        title: "Multitasking Desktop Environment", 
+        description: "A dynamic and familiar desktop UI with a draggable and resizable window manager. Run multiple apps simultaneously, minimize them to the dock, or maximize for a focused view." 
+    },
+    { 
+        icon: Users, 
+        title: "Real-Time Social & Communication Suite", 
+        description: "Connect with others through a full-featured Social Media feed, a real-time Messenger app, and make direct calls with WebRTC-powered Video Calling." 
+    },
+    { 
+        icon: Bot, 
+        title: "AI-Powered Intelligence", 
+        description: "Experience the future with Genkit integration. Chat with Nexbro, a Hinglish-speaking AI assistant, and use the natural language search to find anything on the web." 
+    },
+    { 
+        icon: Sparkles, 
+        title: "Rich Application Ecosystem", 
+        description: "Explore a variety of built-in apps, including a Camera, a multimedia Gallery for photos and videos, a Music Player, a Task Manager, and even a mind-bending memory game." 
+    },
+    { 
+        icon: Code, 
+        title: "Modern & Scalable Tech Stack", 
+        description: "Built with Next.js, React, and TypeScript on the frontend, and powered by a real-time Firebase backend (Firestore and Auth) for a high-performance, scalable experience." 
+    },
+    { 
+        icon: Star, 
+        title: "Persistent & Personalized Experience", 
+        description: "Your session is secure with Firebase Authentication. User profiles, conversations, posts, and music playlists are all stored in Firestore, ensuring your data persists across sessions." 
+    },
   ];
+  
+  const appFeatures = [
+      { icon: MessageSquare, name: "Messenger", description: "Real-time chat with other users, powered by Firestore." },
+      { icon: Users, name: "Social Media", description: "A feed to create posts, follow users, and like content." },
+      { icon: Video, name: "Video Call", description: "Make peer-to-peer video calls using WebRTC." },
+      { icon: Bot, name: "Nexbro", description: "An AI chatbot that speaks Hinglish, powered by Genkit." },
+      { icon: Folder, name: "File Explorer", description: "Navigate a virtual file system structure." },
+      { icon: Music, name: "Music Player", description: "Listen to a playlist of tracks with metadata stored in Firestore." },
+      { icon: Camera, name: "Camera", description: "Capture photos and record videos using your device's camera." },
+      { icon: CheckSquare, name: "Task Manager", description: "Organize your to-do list with priorities and categories." },
+      { icon: Brain, name: "Mind Game", description: "Test your memory with a fun, challenging sequence game." },
+      { icon: Languages, name: "Translator", description: "Translate text between English and Hindi." },
+      { icon: ClockIcon, name: "Clock", description: "A multi-functional clock with alarms, timer, and world clocks." },
+      { icon: Calculator, name: "Calculator", description: "A standard calculator for basic arithmetic." },
+  ]
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4">
@@ -206,7 +246,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
           
           <Separator />
             
-            <div className="space-y-6">
+             <div className="space-y-6">
                 <h3 className="text-lg font-medium flex items-center gap-2">
                   <Info className="w-5 h-5" /> About Prod OS
                 </h3>
@@ -219,19 +259,34 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                     <CardDescription className="text-white/70 text-lg">A Concept OS for the Modern Web</CardDescription>
                   </CardHeader>
                   <CardContent className="px-8 pb-8">
-                    <p className="text-center text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    <p className="text-center text-white/80 mb-10 leading-relaxed max-w-3xl mx-auto">
                       Prod OS is a conceptual operating system built entirely with Next.js, Firebase, and cutting-edge AI. 
-                      It explores the future of user interfaces, multitasking, and human-computer interaction in a web-native environment.
+                      It explores the future of user interfaces, multitasking, and human-computer interaction in a web-native environment, creating a seamless and productive digital workspace.
                     </p>
-
+                    
                     <div className="mb-12">
-                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Core Features</h4>
+                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Core Architecture</h4>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {features.map((feature, index) => (
-                                <div key={index} className="p-6 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                                <div key={index} className="p-6 rounded-2xl flex flex-col" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
                                     <feature.icon className="w-8 h-8 mb-4 text-purple-400"/>
                                     <h5 className="text-lg font-bold mb-2">{feature.title}</h5>
-                                    <p className="text-sm text-white/70">{feature.description}</p>
+                                    <p className="text-sm text-white/70 flex-grow">{feature.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mb-12">
+                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Application Suite</h4>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {appFeatures.map((app, index) => (
+                                <div key={index} className="p-4 rounded-xl flex items-start gap-4" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                                    <app.icon className="w-6 h-6 mt-1 text-purple-400 shrink-0"/>
+                                    <div>
+                                        <h5 className="font-bold text-base">{app.name}</h5>
+                                        <p className="text-xs text-white/70">{app.description}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -277,5 +332,3 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
     </div>
   );
 }
-
-    
