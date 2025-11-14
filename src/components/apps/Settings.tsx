@@ -324,8 +324,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                   </CardHeader>
                   <CardContent className="px-8 pb-8">
                     <p className="text-center text-white/80 mb-10 leading-relaxed max-w-3xl mx-auto">
-                      Prod OS is a conceptual operating system built entirely with Next.js, Firebase, and cutting-edge AI. 
-                      It explores the future of user interfaces, multitasking, and human-computer interaction in a web-native environment, creating a seamless and productive digital workspace.
+                      Hello! I'm Ayush, and this is my vision for a modern, web-native operating system. I built Prod OS from the ground up using Next.js, Firebase, and cutting-edge AI to explore the future of user interfaces, multitasking, and human-computer interaction. My goal was to create a seamless and productive digital workspace that lives entirely in the browser.
                     </p>
                     
                     <div className="mb-12">
@@ -359,7 +358,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                     </div>
 
                     <div className="mb-12">
-                        <h4 className="text-2xl font-semibold mb-8 text-center text-purple-300">System Philosophy & Design</h4>
+                        <h4 className="text-2xl font-semibold mb-8 text-center text-purple-300">My Philosophy & Design</h4>
                          <div className="space-y-8">
                             <div className="flex items-start gap-6">
                                 <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
@@ -368,7 +367,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Component-Based Architecture</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        Prod OS is built from the ground up using a modular, component-based approach with React. Every visual element, from a simple button in the Music Player to an entire application window, is an isolated and reusable component. This philosophy, powered by Next.js, not only makes the system highly maintainable but also incredibly fast, as only the necessary parts of the UI are rendered or updated. This is a departure from monolithic applications, allowing for a dynamic and fluid user experience.
+                                        I built Prod OS from the ground up using a modular, component-based approach with React. Every visual element, from a simple button in the Music Player to an entire application window, is an isolated and reusable component. This philosophy, powered by Next.js, not only makes the system highly maintainable but also incredibly fast, as I only render or update the necessary parts of the UI. This is my departure from monolithic applications, allowing for a dynamic and fluid user experience.
                                     </p>
                                 </div>
                             </div>
@@ -379,7 +378,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Real-Time First Backend</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        The entire backend is powered by Firebase, with a "real-time first" mindset. Instead of traditional request-response cycles, Prod OS uses Firestore's real-time listeners (`onSnapshot`). This means that data changes in the database are pushed to the client instantly. You can see this in action in the Messenger, where messages appear without a refresh, or in the Social Media feed, where new posts and likes update live. This creates a living, breathing digital environment.
+                                        The entire backend is powered by Firebase, with a "real-time first" mindset. Instead of traditional request-response cycles, I use Firestore's real-time listeners (`onSnapshot`). This means that data changes in the database are pushed to your screen instantly. You can see this in action in the Messenger, where messages appear without a refresh, or in the Social Media feed, where new posts and likes update live. This is how I created a living, breathing digital environment.
                                     </p>
                                 </div>
                             </div>
@@ -390,7 +389,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Pragmatic AI Integration</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        Artificial Intelligence is not just a gimmick; it's a core utility. Using Google's Genkit, AI is integrated where it provides genuine value. The `Nexbro` chatbot offers a conversational interface, the search bar understands natural language, and the Translator uses TTS to bring text to life. The architecture is designed to make adding new AI "flows" simple and scalable, opening the door for future features like AI-assisted task creation or content summarization.
+                                        For me, Artificial Intelligence isn't just a gimmick; it's a core utility. Using Google's Genkit, I integrated AI where it provides genuine value. The `Nexbro` chatbot offers a conversational interface, the search bar understands natural language, and the Translator uses TTS to bring text to life. I designed the architecture to make adding new AI "flows" simple and scalable, opening the door for future features like AI-assisted task creation or content summarization.
                                     </p>
                                 </div>
                             </div>
@@ -401,7 +400,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Secure By Design</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        Security is not an afterthought. The system leverages Firebase Authentication for user management and Firestore Security Rules for data access control. The rules are written to enforce a strict user-ownership model: your data is your own. The `isOwner` function in the rules is a prime example, ensuring that a user can only ever access documents within their own data path (e.g., `/users/{'{userId}'}/...`). This path-based security is simple, powerful, and prevents data leaks between users.
+                                        Security was not an afterthought. I leveraged Firebase Authentication for user management and Firestore Security Rules for data access control. I wrote the rules to enforce a strict user-ownership model: your data is your own. The `isOwner` function in the rules is a prime example, ensuring that a user can only ever access documents within their own data path (e.g., `/users/{'{userId}'}/...`). This path-based security is simple, powerful, and prevents data leaks between users.
                                     </p>
                                 </div>
                             </div>
@@ -412,7 +411,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                                 <div>
                                     <h5 className="text-xl font-bold mb-1">Aesthetically Driven UI/UX</h5>
                                     <p className="text-white/80 leading-relaxed">
-                                        The user interface is crafted using ShadCN/UI components and Tailwind CSS, adhering to modern design principles. The goal is a clean, aesthetically pleasing, and intuitive experience. The use of a consistent color palette (defined in `globals.css` with HSL variables), thoughtful animations, and a responsive layout ensures the OS is a pleasure to use, whether on a large desktop monitor or a smaller device. The animated wallpaper itself is a testament to this, creating an immersive and futuristic feel from the moment you log in.
+                                        I crafted the user interface using ShadCN/UI components and Tailwind CSS, adhering to modern design principles. My goal was a clean, aesthetically pleasing, and intuitive experience. The use of a consistent color palette (which I defined in `globals.css` with HSL variables), thoughtful animations, and a responsive layout ensures the OS is a pleasure to use. The animated wallpaper itself is a testament to this, creating an immersive and futuristic feel from the moment you log in.
                                     </p>
                                 </div>
                             </div>
@@ -438,7 +437,7 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                     </div>
 
                      <div className="text-center">
-                        <h4 className="text-xl font-semibold mb-4 text-purple-300">Key Technologies</h4>
+                        <h4 className="text-xl font-semibold mb-4 text-purple-300">Key Technologies I Used</h4>
                         <div className="flex justify-center flex-wrap gap-4 text-sm">
                             <span className="px-4 py-2 rounded-full bg-white/10">Next.js</span>
                             <span className="px-4 py-2 rounded-full bg-white/10">React</span>
