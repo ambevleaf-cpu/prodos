@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -20,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info, Star, MessageSquare, Video, Folder, Music, CheckSquare, Brain, Camera, Languages, Clock as ClockIcon, Calculator, GalleryHorizontal, Youtube, Notebook } from "lucide-react";
+import { BellRing, Monitor, Volume2, Wifi, Palette, UserCircle, LogOut, Cpu, Bot, Sparkles, Wind, Code, Users, Github, Linkedin, Twitter, Info, Star, MessageSquare, Video, Folder, Music, CheckSquare, Brain, Camera, Languages, Clock as ClockIcon, Calculator, GalleryHorizontal, Youtube, Notebook, ShieldCheck, Database, Layers, Feather } from "lucide-react";
 import { useState } from "react";
 import { galleryPhotos } from '@/lib/gallery-data';
 import NextImage from 'next/image';
@@ -72,22 +73,82 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
   ];
   
   const appFeatures = [
-      { icon: MessageSquare, name: "Messenger", description: "Engage in one-on-one, real-time conversations. This app leverages Firestore to sync messages instantly between users, creating a seamless and responsive chat experience." },
-      { icon: Users, name: "Social Media", description: "A complete social platform where you can create posts, see a public feed, like content from others, and follow other users. All data is managed in real-time through Firestore." },
-      { icon: Video, name: "Video Call", description: "Make direct, peer-to-peer video calls to other users. This feature uses WebRTC for efficient, low-latency video streaming, with Firestore handling the call signaling." },
-      { icon: Bot, name: "Nexbro", description: "Chat with a friendly AI assistant that understands and replies in Hinglish. This app showcases the power of Genkit for creating conversational AI experiences." },
-      { icon: Folder, name: "File Explorer", description: "A classic desktop feature allowing you to browse and navigate a virtual file system, demonstrating hierarchical data structures and UI state management." },
-      { icon: Music, name: "Music Player", description: "Listen to a dynamic playlist of tracks. Track metadata is loaded from Firestore, and the app features standard playback controls, a progress bar, and volume adjustment." },
-      { icon: Camera, name: "Camera", description: "Use your device's hardware to capture photos and record videos. This app demonstrates browser Media API integration for a rich multimedia experience." },
-      { icon: GalleryHorizontal, name: "Gallery", description: "Browse your collection of photos and videos. This app includes a modal viewer with a video player and actions like sharing, downloading, or deleting items." },
-      { icon: CheckSquare, name: "Task Manager", description: "A comprehensive tool to organize your to-do list. Add tasks, set priorities and categories, specify due dates, and track your overall progress." },
-      { icon: Brain, name: "Mind Game", description: "A fun and challenging memory game that tests your ability to recall and repeat increasingly complex color sequences, complete with levels and scoring." },
-      { icon: Languages, name: "Translator", description: "Translate text between English and Hindi. This app utilizes a simple dictionary for quick translations and integrates text-to-speech functionality." },
-      { icon: ClockIcon, name: "Clock", description: "A multi-functional timekeeping app. It includes a live clock, configurable alarms, a countdown timer, a stopwatch, and a world clock to view different timezones." },
-      { icon: Calculator, name: "Calculator", description: "A sleek and standard calculator for performing basic arithmetic operations, an essential utility for any desktop environment." },
-      { icon: Youtube, name: "YouTube", description: "A simple web browser embedded in a window, configured to search and display video results from Google, demonstrating how web content can be integrated into the OS." },
-      { icon: Notebook, name: "Notes", description: "An embedded web page that serves as a simple note-taking application, showcasing how third-party web apps can be framed within the OS." },
-  ]
+      { 
+          icon: MessageSquare, 
+          name: "Messenger", 
+          description: "Engage in one-on-one, real-time conversations. This app leverages Firestore to sync messages instantly between users, creating a seamless and responsive chat experience. It features a full chat interface, user list, and new conversation capabilities." 
+      },
+      { 
+          icon: Users, 
+          name: "Social Media", 
+          description: "A complete social platform where you can create posts, see a public feed, like content from others, and follow other users. All data is managed in real-time through Firestore, providing a dynamic and interactive social environment." 
+      },
+      { 
+          icon: Video, 
+          name: "Video Call", 
+          description: "Make direct, peer-to-peer video calls to other users. This feature uses WebRTC for efficient, low-latency video streaming, with Firestore handling the call signaling (offer, answer, and ICE candidates)." 
+      },
+      { 
+          icon: Bot, 
+          name: "Nexbro", 
+          description: "Chat with a friendly AI assistant that understands and replies in Hinglish. This app showcases the power of Genkit for creating engaging and culturally-aware conversational AI experiences." 
+      },
+      { 
+          icon: Folder, 
+          name: "File Explorer", 
+          description: "A classic desktop feature allowing you to browse and navigate a virtual file system, demonstrating hierarchical data structures and UI state management within a familiar interface." 
+      },
+      { 
+          icon: Music, 
+          name: "Music Player", 
+          description: "Listen to a dynamic playlist of tracks stored in Firestore. The app features standard playback controls, a progress bar, volume adjustment, and the ability for users to add new songs to the public playlist." 
+      },
+      { 
+          icon: Camera, 
+          name: "Camera", 
+          description: "Use your device's hardware to capture photos and record videos. This app demonstrates browser Media API integration for a rich multimedia experience, complete with a live preview and capture controls." 
+      },
+      { 
+          icon: GalleryHorizontal, 
+          name: "Gallery", 
+          description: "Browse your collection of photos and videos. This app includes a modal viewer with a video player and actions like sharing, downloading, or deleting items, managing a local state of media content." 
+      },
+      { 
+          icon: CheckSquare, 
+          name: "Task Manager", 
+          description: "A comprehensive tool to organize your to-do list. Add tasks, set priorities and categories, specify due dates, and track your overall progress with a visual progress bar." 
+      },
+      { 
+          icon: Brain, 
+          name: "Mind Game", 
+          description: "A fun and challenging memory game that tests your ability to recall and repeat increasingly complex color sequences, complete with levels and scoring to engage the user." 
+      },
+      { 
+          icon: Languages, 
+          name: "Translator", 
+          description: "Translate text between English and Hindi. This app utilizes a simple dictionary for quick translations and integrates text-to-speech functionality using Genkit's TTS capabilities." 
+      },
+      { 
+          icon: ClockIcon, 
+          name: "Clock", 
+          description: "A multi-functional timekeeping app. It includes a live clock, configurable alarms, a countdown timer, a stopwatch, and a world clock to view different timezones." 
+      },
+      { 
+          icon: Calculator, 
+          name: "Calculator", 
+          description: "A sleek and standard calculator for performing basic arithmetic operations, an essential utility for any desktop environment, built with a simple and clean interface." 
+      },
+      { 
+          icon: Youtube, 
+          name: "YouTube", 
+          description: "A simple web browser embedded in a window, configured to search and display video results from Google, demonstrating how web content can be integrated into the OS." 
+      },
+      { 
+          icon: Notebook, 
+          name: "Notes", 
+          description: "An embedded web page that serves as a simple note-taking application, showcasing how third-party web apps can be framed within the OS for extended functionality." 
+      },
+  ];
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4">
@@ -281,17 +342,80 @@ export default function Settings({ onSetWallpaper, onSignOut }: SettingsProps) {
                     </div>
 
                     <div className="mb-12">
-                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Application Suite</h4>
+                        <h4 className="text-2xl font-semibold mb-6 text-center text-purple-300">Application Suite: A Detailed Look</h4>
                         <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
                             {appFeatures.map((app, index) => (
                                 <div key={index} className="p-4 rounded-xl flex items-start gap-4" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                                    <app.icon className="w-8 h-8 mt-1 text-purple-400 shrink-0"/>
+                                    <div className="p-2 bg-purple-900/50 rounded-lg mt-1">
+                                        <app.icon className="w-6 h-6 text-purple-300 shrink-0"/>
+                                    </div>
                                     <div>
                                         <h5 className="font-bold text-base">{app.name}</h5>
                                         <p className="text-xs text-white/70">{app.description}</p>
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="mb-12">
+                        <h4 className="text-2xl font-semibold mb-8 text-center text-purple-300">System Philosophy & Design</h4>
+                         <div className="space-y-8">
+                            <div className="flex items-start gap-6">
+                                <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
+                                    <Layers className="w-8 h-8 text-purple-300" />
+                                </div>
+                                <div>
+                                    <h5 className="text-xl font-bold mb-1">Component-Based Architecture</h5>
+                                    <p className="text-white/80 leading-relaxed">
+                                        Prod OS is built from the ground up using a modular, component-based approach with React. Every visual element, from a simple button in the Music Player to an entire application window, is an isolated and reusable component. This philosophy, powered by Next.js, not only makes the system highly maintainable but also incredibly fast, as only the necessary parts of the UI are rendered or updated. This is a departure from monolithic applications, allowing for a dynamic and fluid user experience.
+                                    </p>
+                                </div>
+                            </div>
+                             <div className="flex items-start gap-6">
+                                <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
+                                    <Database className="w-8 h-8 text-purple-300" />
+                                </div>
+                                <div>
+                                    <h5 className="text-xl font-bold mb-1">Real-Time First Backend</h5>
+                                    <p className="text-white/80 leading-relaxed">
+                                        The entire backend is powered by Firebase, with a "real-time first" mindset. Instead of traditional request-response cycles, Prod OS uses Firestore's real-time listeners (`onSnapshot`). This means that data changes in the database are pushed to the client instantly. You can see this in action in the Messenger, where messages appear without a refresh, or in the Social Media feed, where new posts and likes update live. This creates a living, breathing digital environment.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-6">
+                                <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
+                                    <Bot className="w-8 h-8 text-purple-300" />
+                                </div>
+                                <div>
+                                    <h5 className="text-xl font-bold mb-1">Pragmatic AI Integration</h5>
+                                    <p className="text-white/80 leading-relaxed">
+                                        Artificial Intelligence is not just a gimmick; it's a core utility. Using Google's Genkit, AI is integrated where it provides genuine value. The `Nexbro` chatbot offers a conversational interface, the search bar understands natural language, and the Translator uses TTS to bring text to life. The architecture is designed to make adding new AI "flows" simple and scalable, opening the door for future features like AI-assisted task creation or content summarization.
+                                    </p>
+                                </div>
+                            </div>
+                             <div className="flex items-start gap-6">
+                                <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
+                                    <ShieldCheck className="w-8 h-8 text-purple-300" />
+                                </div>
+                                <div>
+                                    <h5 className="text-xl font-bold mb-1">Secure By Design</h5>
+                                    <p className="text-white/80 leading-relaxed">
+                                        Security is not an afterthought. The system leverages Firebase Authentication for user management and Firestore Security Rules for data access control. The rules are written to enforce a strict user-ownership model: your data is your own. The `isOwner` function in the rules is a prime example, ensuring that a user can only ever access documents within their own data path (e.g., `/users/{userId}/...`). This path-based security is simple, powerful, and prevents data leaks between users.
+                                    </p>
+                                </div>
+                            </div>
+                              <div className="flex items-start gap-6">
+                                <div className="p-3 bg-purple-900/50 rounded-lg mt-1">
+                                    <Feather className="w-8 h-8 text-purple-300" />
+                                </div>
+                                <div>
+                                    <h5 className="text-xl font-bold mb-1">Aesthetically Driven UI/UX</h5>
+                                    <p className="text-white/80 leading-relaxed">
+                                        The user interface is crafted using ShadCN/UI components and Tailwind CSS, adhering to modern design principles. The goal is a clean, aesthetically pleasing, and intuitive experience. The use of a consistent color palette (defined in `globals.css` with HSL variables), thoughtful animations, and a responsive layout ensures the OS is a pleasure to use, whether on a large desktop monitor or a smaller device. The animated wallpaper itself is a testament to this, creating an immersive and futuristic feel from the moment you log in.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
