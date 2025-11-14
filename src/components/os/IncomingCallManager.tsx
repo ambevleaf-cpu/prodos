@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFirestore, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,14 +16,11 @@ import { Phone, PhoneOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface IncomingCallManagerProps {
-  pc: RTCPeerConnection | null;
-  setRemoteStream: (stream: MediaStream) => void;
-  setActiveCallId: (id: string) => void;
-  setIsCallActive: (isActive: boolean) => void;
+  setCallDetails: (details: { callId: string; isCallActive: boolean }) => void;
   openVideoCallApp: () => void;
 }
 
-export default function IncomingCallManager({ pc, setRemoteStream, setActiveCallId, setIsCallActive, openVideoCallApp }: IncomingCallManagerProps) {
+export default function IncomingCallManager({ setCallDetails, openVideoCallApp }: IncomingCallManagerProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const [incomingCall, setIncomingCall] = useState<any>(null);
@@ -48,7 +45,7 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
     },
     (error) => {
         const contextualError = new FirestorePermissionError({
-          path: 'calls',
+          path: `calls`,
           operation: 'list',
         });
         errorEmitter.emit('permission-error', contextualError);
@@ -58,67 +55,11 @@ export default function IncomingCallManager({ pc, setRemoteStream, setActiveCall
   }, [user, firestore]);
 
   const answerCall = async () => {
-    if (!pc || !incomingCall || !firestore) return;
+    if (!incomingCall) return;
 
     openVideoCallApp();
-    setIsCallActive(true);
-    setActiveCallId(incomingCall.id);
-
-    const callDocRef = doc(firestore, 'calls', incomingCall.id);
-    const answerCandidates = collection(callDocRef, 'calleeCandidates');
-    const offerCandidates = collection(callDocRef, 'callerCandidates');
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        addDoc(answerCandidates, event.candidate.toJSON()).catch(err => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: answerCandidates.path,
-                operation: 'create',
-                requestResourceData: event.candidate.toJSON(),
-            }));
-        });
-      }
-    };
-
-    try {
-        const callData = (await getDoc(callDocRef)).data();
-        if (callData?.offer) {
-            await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
-        }
-        
-        const answerDescription = await pc.createAnswer();
-        await pc.setLocalDescription(answerDescription);
-
-        const answer = {
-          type: answerDescription.type,
-          sdp: answerDescription.sdp,
-        };
-
-        await updateDoc(callDocRef, { answer, status: 'answered' });
-
-        onSnapshot(offerCandidates, (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const candidate = new RTCIceCandidate(change.doc.data());
-              pc.addIceCandidate(candidate);
-            }
-          });
-        },
-        (error) => {
-            const contextualError = new FirestorePermissionError({
-                path: offerCandidates.path,
-                operation: 'list',
-            });
-            errorEmitter.emit('permission-error', contextualError);
-        });
-
-    } catch (err) {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: callDocRef.path,
-            operation: 'get',
-        }));
-    }
-
+    setCallDetails({ callId: incomingCall.id, isCallActive: true });
+    
     setIncomingCall(null);
   };
 
