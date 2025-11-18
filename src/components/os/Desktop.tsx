@@ -298,7 +298,7 @@ export default function Desktop() {
       </div>
 
       <TopBar onReset={handleResetDesktop} />
-      <div className="flex-grow relative" ref={desktopRef}>
+      <div className="relative flex-grow h-0" ref={desktopRef}>
         <TaskListWidget tasks={tasks} onToggleTask={toggleTask} onOpenTaskManager={() => openApp('taskManager')} />
         <IncomingCallManager
             setCallDetails={setCallDetails}
