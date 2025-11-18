@@ -77,7 +77,7 @@ export default function Window({
     >
       <Card
         className={cn(
-          "w-full h-full flex flex-col shadow-2xl transition-shadow duration-300",
+          "w-full h-full flex flex-col shadow-2xl transition-shadow duration-300 overflow-hidden",
           isActive ? "shadow-blue-500/50" : "shadow-black/20",
           isMaximized && "rounded-none"
         )}
@@ -107,7 +107,7 @@ export default function Window({
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 flex-grow overflow-auto">
+        <CardContent className="p-0 flex-grow relative">
           {children}
         </CardContent>
         {!isMaximized && (
