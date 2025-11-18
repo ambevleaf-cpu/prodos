@@ -336,7 +336,7 @@ export default function MessagesApp() {
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="bg-[#008069] text-white p-3 flex items-center justify-between border-l border-white/10">
+            <header className="bg-[#008069] text-white p-3 flex items-center justify-between border-l border-white/10 shrink-0">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <Button 
                   variant="ghost"
@@ -368,10 +368,10 @@ export default function MessagesApp() {
                 <Phone className="w-5 h-5 cursor-pointer hover:opacity-80" />
                 <MoreVertical className="w-5 h-5 cursor-pointer hover:opacity-80" />
               </div>
-            </div>
+            </header>
 
             {/* Messages Area */}
-            <div 
+            <main
               className="flex-1 overflow-y-auto p-4 space-y-3"
               style={{
                 backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADcT81VAAAAAXNSR0IArs4c6QAAADFJREFUGFcBLQAn/wFpADsADgELADsACgACQAAsAAsADgA6AAcACgBqAAsADgALAAkABgDSiAblFjWfGgAAAABJRU5ErkJggg==")',
@@ -407,10 +407,10 @@ export default function MessagesApp() {
                 </div>
               ))}
               <div ref={messagesEndRef} />
-            </div>
+            </main>
 
             {/* Message Input */}
-            <div className="bg-[#F0F2F5] p-3 flex items-center gap-3">
+            <footer className="bg-[#F0F2F5] p-3 flex items-center gap-3 shrink-0">
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
                   <Smile className="w-6 h-6" />
@@ -441,7 +441,7 @@ export default function MessagesApp() {
               >
                 <Send className="w-5 h-5" />
               </Button>
-            </div>
+            </footer>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-[#F0F2F5]">
