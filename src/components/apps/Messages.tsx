@@ -241,7 +241,7 @@ export default function MessagesApp() {
   }
 
   return (
-    <div className="absolute inset-0 flex h-full">
+    <div className="w-full h-full flex">
       {/* Sidebar - Chats List */}
       <div className={`${view === 'chat' && 'hidden md:flex'} flex-col w-full md:w-[350px] lg:w-[400px] bg-white border-r`}>
         {/* Header */}
@@ -372,7 +372,7 @@ export default function MessagesApp() {
 
             {/* Messages Area */}
             <main
-              className="flex-1 overflow-y-auto p-4 space-y-3 h-0"
+              className="flex-grow h-0 overflow-y-auto p-4 space-y-3"
               style={{
                 backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADcT81VAAAAAXNSR0IArs4c6QAAADFJREFUGFcBLQAn/wFpADsADgELADsACgACQAAsAAsADgA6AAcACgBqAAsADgALAAkABgDSiAblFjWfGgAAAABJRU5ErkJggg==")',
                 backgroundRepeat: 'repeat',
@@ -495,4 +495,5 @@ export default function MessagesApp() {
       </Dialog>
     </div>
   );
-}
+
+    
