@@ -332,9 +332,9 @@ export default function MessagesApp() {
       </div>
 
       {/* Chat Area */}
-      <div className={`${view === 'chats' ? 'hidden md:flex' : 'flex'} flex-col flex-1`}>
+      <div className={`${view === 'chats' ? 'hidden md:flex' : 'flex'} flex-1 relative`}>
         {selectedChat ? (
-          <>
+          <div className="absolute inset-0 flex flex-col">
             {/* Chat Header */}
             <header className="bg-[#008069] text-white p-3 flex items-center justify-between border-l border-white/10 shrink-0">
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -442,7 +442,7 @@ export default function MessagesApp() {
                 <Send className="w-5 h-5" />
               </Button>
             </footer>
-          </>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-[#F0F2F5]">
             <div className="text-center">
