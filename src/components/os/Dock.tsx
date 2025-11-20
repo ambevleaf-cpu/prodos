@@ -14,7 +14,7 @@ interface DockProps {
 export default function Dock({ onAppClick, openWindows, onWindowClick }: DockProps) {
   return (
     <TooltipProvider>
-      <footer className="w-full flex justify-center p-2 z-50">
+      <footer className="w-full flex justify-center p-2 z-50 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-center gap-2 bg-white/30 dark:bg-black/30 backdrop-blur-lg p-2 rounded-xl border border-white/20 dark:border-black/20 shadow-lg">
           {APPS_CONFIG.map(app => {
             const isRunning = openWindows.some(w => w.appId === app.id);
