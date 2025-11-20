@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -6,10 +7,16 @@ import { handleBuddyChat } from '@/app/actions';
 import { handleTextToSpeech } from '@/app/actions';
 
 interface Message {
-  id: number;
+  id: string;
   text: string;
   sender: 'user' | 'bot';
 }
+
+// Simple unique ID generator to prevent key collisions
+const generateUniqueId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
 
 // Check for SpeechRecognition API
 const SpeechRecognition =
@@ -18,7 +25,7 @@ const SpeechRecognition =
 export default function BuddyChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
+      id: generateUniqueId(),
       text: 'Hey bhai! Main Buddy hoon. Mic pe click kar aur bol, kya help chahiye?',
       sender: 'bot',
     },
@@ -53,7 +60,7 @@ export default function BuddyChatbot() {
       if (lastUserMessage?.sender === 'user') {
           setMessages(prev => [...prev.slice(0, -1), { ...lastUserMessage, text: transcript }]);
       } else {
-           setMessages(prev => [...prev, { id: Date.now(), text: transcript, sender: 'user' }]);
+           setMessages(prev => [...prev, { id: generateUniqueId(), text: transcript, sender: 'user' }]);
       }
 
       if (event.results[0].isFinal) {
@@ -89,7 +96,7 @@ export default function BuddyChatbot() {
     if (isListening) {
       recognitionRef.current?.stop();
     } else {
-      setMessages(prev => [...prev, {id: Date.now(), text: 'Suna raha hoon...', sender: 'user'}]);
+      setMessages(prev => [...prev, {id: generateUniqueId(), text: 'Suna raha hoon...', sender: 'user'}]);
       recognitionRef.current?.start();
     }
     setIsListening(!isListening);
@@ -108,7 +115,7 @@ export default function BuddyChatbot() {
         botResponseText = response.error;
     }
 
-    const botMessage: Message = { id: Date.now() + 1, text: botResponseText, sender: 'bot' };
+    const botMessage: Message = { id: generateUniqueId(), text: botResponseText, sender: 'bot' };
     setMessages(prev => [...prev, botMessage]);
 
     const ttsResponse = await handleTextToSpeech({ text: botResponseText });
