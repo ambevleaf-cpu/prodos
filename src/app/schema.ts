@@ -19,3 +19,14 @@ export const ChatWithNexbroOutputSchema = z.object({
   reply: z.string().describe('The chatbot\'s reply in Hinglish.'),
 });
 export type ChatWithNexbroOutput = z.infer<typeof ChatWithNexbroOutputSchema>;
+
+export const TranslateTextInputSchema = z.object({
+  text: z.string().describe('The text to translate.'),
+  targetLanguage: z.enum(['English', 'Hindi']).describe('The language to translate the text into.'),
+});
+export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
+
+export const TranslateTextOutputSchema = z.object({
+  translatedText: z.string().describe('The translated text.'),
+});
+export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
