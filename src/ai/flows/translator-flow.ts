@@ -16,7 +16,7 @@ const translatorPrompt = ai.definePrompt({
 
 Text: {{{text}}}
 
-Translation:`,
+Return the result as a JSON object with the key "translatedText".`,
 });
 
 const translatorFlow = ai.defineFlow(
