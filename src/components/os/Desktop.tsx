@@ -19,6 +19,7 @@ import TaskManager from '../apps/TaskManager';
 import SocialMediaApp from '../apps/SocialMedia';
 import VideoCallApp from '../apps/VideoCall';
 import NexbroChatbot from '../apps/Nexbro';
+import BuddyChatbot from '../apps/Buddy';
 import MindGame from '../apps/MindGame';
 import MessagesApp from '../apps/Messages';
 import MusicPlayer from '../apps/MusicPlayer';
@@ -58,6 +59,7 @@ const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   socialMedia: SocialMediaApp,
   videoCall: VideoCallApp,
   nexbro: NexbroChatbot,
+  buddy: BuddyChatbot,
   mindGame: MindGame,
   messages: MessagesApp,
   musicPlayer: MusicPlayer,
@@ -191,8 +193,8 @@ export default function Desktop() {
       title: app.title,
       x: Math.random() * 200 + 50,
       y: Math.random() * 100 + 50,
-      width: ['calculator', 'nexbro', 'messages', 'musicPlayer'].includes(app.id) ? 450 : (['clock', 'taskManager', 'mindGame', 'settings'].includes(app.id) ? 900 : 800),
-      height: ['clock', 'taskManager', 'videoCall', 'nexbro', 'mindGame', 'settings', 'messages', 'musicPlayer'].includes(app.id) ? 700 : 600,
+      width: ['calculator', 'nexbro', 'buddy', 'messages', 'musicPlayer'].includes(app.id) ? 450 : (['clock', 'taskManager', 'mindGame', 'settings'].includes(app.id) ? 900 : 800),
+      height: ['clock', 'taskManager', 'videoCall', 'nexbro', 'buddy', 'mindGame', 'settings', 'messages', 'musicPlayer'].includes(app.id) ? 700 : 600,
       zIndex: nextZIndex,
       isMinimized: false,
       isMaximized: false,

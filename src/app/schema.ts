@@ -30,3 +30,13 @@ export const TranslateTextOutputSchema = z.object({
   translatedText: z.string().describe('The translated text.'),
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
+
+export const ChatWithBuddyInputSchema = z.object({
+  message: z.string().describe('The user\'s message to the chatbot.'),
+});
+export type ChatWithBuddyInput = z.infer<typeof ChatWithBuddyInputSchema>;
+
+export const ChatWithBuddyOutputSchema = z.object({
+  reply: z.string().describe('The chatbot\'s reply in Hinglish.'),
+});
+export type ChatWithBuddyOutput = z.infer<typeof ChatWithBuddyOutputSchema>;

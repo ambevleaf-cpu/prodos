@@ -4,7 +4,8 @@ import { naturalLanguageSearch, type NaturalLanguageSearchOutput } from '@/ai/fl
 import { translateText as translateTextFlow } from '@/ai/flows/translator-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { chatWithNexbro } from '@/ai/flows/nexbro-flow';
-import { type TextToSpeechInput, type TextToSpeechOutput, type ChatWithNexbroInput, type ChatWithNexbroOutput, type TranslateTextInput, type TranslateTextOutput } from './schema';
+import { chatWithBuddy } from '@/ai/flows/buddy-flow';
+import { type TextToSpeechInput, type TextToSpeechOutput, type ChatWithNexbroInput, type ChatWithNexbroOutput, type TranslateTextInput, type TranslateTextOutput, type ChatWithBuddyInput, type ChatWithBuddyOutput } from './schema';
 
 export async function handleSearch(
   prevState: any,
@@ -76,5 +77,22 @@ export async function handleNexbroChat(input: ChatWithNexbroInput): Promise<{
     } catch (error) {
         console.error('Nexbro Chat Error:', error);
         return { result: null, error: 'Arre bhai, thoda technical issue aa gaya! Dubara try kar 😅' };
+    }
+}
+
+export async function handleBuddyChat(input: ChatWithBuddyInput): Promise<{
+  result: ChatWithBuddyOutput | null;
+  error: string | null;
+}> {
+    if (!input.message) {
+        return { result: null, error: 'Please enter a message.' };
+    }
+    
+    try {
+        const result = await chatWithBuddy(input);
+        return { result, error: null };
+    } catch (error) {
+        console.error('Buddy Chat Error:', error);
+        return { result: null, error: 'Yaar, abhi thoda problem hai. Ek min baad try kar! 🤔' };
     }
 }

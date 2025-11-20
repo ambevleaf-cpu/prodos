@@ -1,4 +1,4 @@
-import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, Video, Bot, Brain, Info, MessageSquare, Music, type LucideIcon } from 'lucide-react';
+import { FolderOpen, Settings2, Calculator, Camera, GalleryHorizontal, Youtube, Notebook, Languages, Clock, CheckSquare, Users, Video, Bot, Brain, Info, MessageSquare, Music, Headphones, type LucideIcon } from 'lucide-react';
 
 export interface AppConfig {
   id: string;
@@ -36,6 +36,11 @@ export const APPS_CONFIG: AppConfig[] = [
     id: 'nexbro',
     title: 'Nexbro',
     icon: Bot,
+  },
+  {
+    id: 'buddy',
+    title: 'Buddy',
+    icon: Headphones,
   },
   {
     id: 'notes',
@@ -88,5 +93,3 @@ export const APPS_CONFIG: AppConfig[] = [
     icon: Camera,
   },
 ];
-
-    
