@@ -49,13 +49,14 @@ export default function Window({
   const getWindowStyle = (): React.CSSProperties => {
     if (isMaximized && desktopRef.current) {
         const desktopRect = desktopRef.current.getBoundingClientRect();
-        // Dock height is roughly 88px. (h-14 p-2 => 56+16=72, plus container p-2 => 72+16=88)
+        // Dock height is 88px (h-14 + p-2*2) + footer p-2*2 = 72 + 16 = 88.
+        // A more robust way might be to measure it, but this is a close approximation.
         const dockHeight = 88;
         
         return {
             transform: `translate(0px, 0px)`,
             width: `${desktopRect.width}px`,
-            height: `${desktopRect.height - dockHeight}px`,
+            height: `${desktopRect.height}px`, // Desktop container already accounts for dock height
             zIndex: zIndex,
             transition: 'width 0.2s ease-in-out, height 0.2s ease-in-out, transform 0.2s ease-in-out',
         };

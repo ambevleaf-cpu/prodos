@@ -287,7 +287,6 @@ export default function Desktop() {
 
   return (
     <div
-      ref={desktopRef}
       className="h-full w-full flex flex-col"
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
