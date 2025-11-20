@@ -56,12 +56,15 @@ export default function BuddyChatbot() {
         .map((result) => result.transcript)
         .join('');
       
-      const lastUserMessage = messages[messages.length - 1];
-      if (lastUserMessage?.sender === 'user') {
-          setMessages(prev => [...prev.slice(0, -1), { ...lastUserMessage, text: transcript }]);
-      } else {
-           setMessages(prev => [...prev, { id: generateUniqueId(), text: transcript, sender: 'user' }]);
-      }
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.sender === 'user') {
+          const newMessages = [...prev.slice(0, -1), { ...lastMessage, text: transcript || '...' }];
+          return newMessages;
+        }
+        return [...prev, { id: generateUniqueId(), text: transcript || '...', sender: 'user' }];
+      });
+
 
       if (event.results[0].isFinal) {
         handleSpeechResult(transcript);
@@ -86,7 +89,7 @@ export default function BuddyChatbot() {
         audioRef.current.onended = () => setIsBotSpeaking(false);
     }
 
-  }, [messages]);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -103,7 +106,12 @@ export default function BuddyChatbot() {
   };
 
   const handleSpeechResult = async (transcript: string) => {
-    if (!transcript.trim()) return;
+    if (!transcript.trim()) {
+        // If the final transcript is empty, remove the "Suna raha hoon..." message
+        setMessages(prev => prev.filter(m => m.text !== 'Suna raha hoon...' && m.text !== '...'));
+        return;
+    }
+    
     setIsProcessing(true);
     
     const response = await handleBuddyChat({ message: transcript });
