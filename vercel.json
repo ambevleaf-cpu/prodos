@@ -1,16 +1,10 @@
 {
-  "builds": [
-    {
-      "src": "next.config.ts",
-      "use": "@vercel/next"
-    }
-  ],
   "functions": {
     "src/app/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "src/ai/flows/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   }
 }
